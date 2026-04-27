@@ -749,7 +749,7 @@
       Importar XLS
     </button>
     <input type="file" id="inputImportXLS" accept=".xlsx,.xls" style="display:none">
-    <button class="btn btn-outline" onclick="exportXLS()">
+    <button class="btn btn-outline" onclick="exportXLS().catch(e=>toast('Erro: '+e.message,false,true))">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Exportar XLS
     </button>
@@ -1710,211 +1710,147 @@ function imprimirPDF(id) {
 const COLUNAS = ['Matrícula','Nome','CPF','Cargo','Setor','Unidade','Telefone','E-mail','Admissão','Status','Permutado','Município Origem','Observações'];
 const CAMPOS  = ['matricula','nome','cpf','cargo','setor','unidade','telefone','email','dataAdmissao','status','permutado','municipioOrigem','obs'];
 
-function exportXLS() {
-  if (typeof XLSX === 'undefined') { toast('Biblioteca XLS ainda carregando, tente novamente.', false, true); return; }
+async function exportXLS() {
+  if (typeof ExcelJS === 'undefined') { toast('Biblioteca XLS ainda carregando, tente novamente.', false, true); return; }
   const filtrados = getSorted(getFiltrados());
   if (filtrados.length === 0) { toast('Nenhum registro para exportar.', false, true); return; }
 
-  const hoje = new Date();
-  const dataHoje = hoje.toLocaleDateString('pt-BR');
+  const hoje = new Date().toLocaleDateString('pt-BR');
   const fmtData = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '';
 
-  // ── Cores ──
-  const COR_VERDE_ESC  = '1A6B3C';
-  const COR_VERDE_MED  = '2D4A35';
-  const COR_VERDE_MUTED= 'E8F5EE';
-  const COR_VERDE_BORDA= 'B8DFC8';
-  const COR_CINZA_BG   = 'F5F6F8';
-  const COR_AMARELO_BG = 'FFF3CD';
-  const COR_ATIVO_BG   = 'D4EDDC';
-  const COR_AFASTADO_BG= 'FFF3CD';
-  const COR_INATIVO_BG = 'F8D7DA';
-  const COR_BRANCO     = 'FFFFFF';
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'GEE-Func'; wb.created = new Date();
+  const ws = wb.addWorksheet('Funcionários', { views:[{ state:'frozen', ySplit:3 }] });
 
-  // ── Estilos reutilizáveis ──
+  // ── Larguras das colunas ──
+  ws.columns = [
+    { width:10 }, { width:32 }, { width:15 }, { width:24 }, { width:22 },
+    { width:28 }, { width:15 }, { width:28 }, { width:12 }, { width:12 },
+    { width:12 }, { width:22 }, { width:30 },
+  ];
+
+  // ── Helpers de estilo ──
   const borda = (cor='DDE1E7') => ({
-    top:    { style:'thin', color:{ rgb: cor } },
-    bottom: { style:'thin', color:{ rgb: cor } },
-    left:   { style:'thin', color:{ rgb: cor } },
-    right:  { style:'thin', color:{ rgb: cor } },
+    top:    { style:'thin', color:{ argb:'FF'+cor } },
+    bottom: { style:'thin', color:{ argb:'FF'+cor } },
+    left:   { style:'thin', color:{ argb:'FF'+cor } },
+    right:  { style:'thin', color:{ argb:'FF'+cor } },
   });
-  const bordaMedia = (cor='1A6B3C') => ({
-    top:    { style:'medium', color:{ rgb: cor } },
-    bottom: { style:'medium', color:{ rgb: cor } },
-    left:   { style:'medium', color:{ rgb: cor } },
-    right:  { style:'medium', color:{ rgb: cor } },
+
+  // ── Linha 1: Título ──
+  ws.mergeCells('A1:M1');
+  const t1 = ws.getCell('A1');
+  t1.value = 'GEE-Func · Gerência de Educação Especial — Relação de Funcionários';
+  t1.font  = { name:'Arial', bold:true, size:13, color:{ argb:'FFFFFFFF' } };
+  t1.fill  = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF1A6B3C' } };
+  t1.alignment = { horizontal:'left', vertical:'middle', indent:1 };
+  ws.getRow(1).height = 28;
+
+  // ── Linha 2: Subtítulo ──
+  ws.mergeCells('A2:M2');
+  const t2 = ws.getCell('A2');
+  t2.value = `Secretaria Municipal de Educação · Campos dos Goytacazes — RJ · Gerado em ${hoje}`;
+  t2.font  = { name:'Arial', italic:true, size:9, color:{ argb:'FFFFFFFF' } };
+  t2.fill  = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2D9E60' } };
+  t2.alignment = { horizontal:'left', vertical:'middle', indent:1 };
+  ws.getRow(2).height = 16;
+
+  // ── Linha 3: Cabeçalhos ──
+  const cabRow = ws.addRow(COLUNAS);
+  cabRow.height = 22;
+  cabRow.eachCell(cell => {
+    cell.font      = { name:'Arial', bold:true, size:9, color:{ argb:'FFFFFFFF' } };
+    cell.fill      = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2D4A35' } };
+    cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
+    cell.border    = borda('3D6B4A');
   });
-  const centro = { horizontal:'center', vertical:'center', wrapText: true };
-  const esquerda = { horizontal:'left', vertical:'center', wrapText: true };
 
-  // ── Montar dados ──
-  const wb = XLSX.utils.book_new();
-  const wsData = [];
+  // ── Linhas de dados ──
+  filtrados.forEach((f, idx) => {
+    const par = idx % 2 === 0;
+    const bgLinha = par ? 'FFF5F6F8' : 'FFFFFFFF';
 
-  // Linha 1: Título
-  wsData.push(['GEE-Func · Gerência de Educação Especial — Relação de Funcionários', ...Array(12).fill('')]);
-  // Linha 2: Subtítulo
-  wsData.push([`Secretaria Municipal de Educação · Campos dos Goytacazes — RJ · Gerado em ${dataHoje}`, ...Array(12).fill('')]);
-  // Linha 3: Cabeçalhos
-  wsData.push(COLUNAS);
-  // Linhas de dados
-  filtrados.forEach(f => {
-    wsData.push(CAMPOS.map(c => {
+    const vals = CAMPOS.map(c => {
       if (c === 'permutado') return f[c] ? 'Sim' : 'Não';
       if (c === 'dataAdmissao') return fmtData(f[c]);
       return f[c] || '';
-    }));
+    });
+
+    const row = ws.addRow(vals);
+    row.height = 18;
+
+    row.eachCell({ includeEmpty:true }, (cell, colNum) => {
+      const ci = colNum - 1; // índice 0-based
+
+      // Padrão
+      cell.font      = { name:'Arial', size:9 };
+      cell.fill      = { type:'pattern', pattern:'solid', fgColor:{ argb: bgLinha } };
+      cell.alignment = { vertical:'middle', wrapText: [2,5,6,8,13].includes(colNum) };
+      cell.border    = borda();
+
+      // Matrícula — monospace centralizado
+      if (ci === 0) {
+        cell.font      = { name:'Courier New', size:9, color:{ argb:'FF555555' } };
+        cell.alignment = { horizontal:'center', vertical:'middle' };
+      }
+      // Nome — negrito
+      if (ci === 1) cell.font = { name:'Arial', size:9, bold:true };
+      // Admissão — centralizado
+      if (ci === 8) cell.alignment = { horizontal:'center', vertical:'middle' };
+      // Status — badge colorido
+      if (ci === 9) {
+        const s = f.status;
+        const bgS = s==='Ativo' ? 'FFD4EDDC' : s==='Afastado' ? 'FFFFF3CD' : 'FFF8D7DA';
+        const fgS = s==='Ativo' ? 'FF1A6B3C' : s==='Afastado' ? 'FF856404' : 'FF721C24';
+        cell.fill      = { type:'pattern', pattern:'solid', fgColor:{ argb: bgS } };
+        cell.font      = { name:'Arial', size:9, bold:true, color:{ argb: fgS } };
+        cell.alignment = { horizontal:'center', vertical:'middle' };
+      }
+      // Permutado
+      if (ci === 10) {
+        const perm = f.permutado;
+        cell.fill  = { type:'pattern', pattern:'solid', fgColor:{ argb: perm ? 'FFFFF3CD' : bgLinha } };
+        cell.font  = { name:'Arial', size:9, bold:perm, color:{ argb: perm ? 'FF856404' : 'FF888888' } };
+        cell.alignment = { horizontal:'center', vertical:'middle' };
+      }
+      // Município origem
+      if (ci === 11 && f.permutado) {
+        cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF3CD' } };
+        cell.font = { name:'Arial', size:9, color:{ argb:'FF856404' } };
+      }
+    });
   });
-  // Linha de totais
-  const nAtivos    = filtrados.filter(f => f.status === 'Ativo').length;
-  const nAfastados = filtrados.filter(f => f.status === 'Afastado').length;
-  const nInativos  = filtrados.filter(f => f.status === 'Inativo').length;
+
+  // ── Linha de totais ──
+  const nAtivos    = filtrados.filter(f => f.status==='Ativo').length;
+  const nAfastados = filtrados.filter(f => f.status==='Afastado').length;
+  const nInativos  = filtrados.filter(f => f.status==='Inativo').length;
   const nPermut    = filtrados.filter(f => f.permutado).length;
-  wsData.push([
+
+  const totRow = ws.addRow([
     `Total: ${filtrados.length} funcionário${filtrados.length!==1?'s':''}`,
     '','','','','','','','',
     `${nAtivos} ativos · ${nAfastados} afastados · ${nInativos} inativos`,
     `${nPermut} permutado${nPermut!==1?'s':''}`,
     '','',
   ]);
+  totRow.height = 18;
+  totRow.eachCell({ includeEmpty:true }, (cell, colNum) => {
+    const isPermuta = colNum === 11;
+    cell.font      = { name:'Arial', bold:true, size:9, color:{ argb: isPermuta ? 'FF856404' : 'FF1A6B3C' } };
+    cell.fill      = { type:'pattern', pattern:'solid', fgColor:{ argb: isPermuta ? 'FFFFF3CD' : 'FFE8F5EE' } };
+    cell.alignment = colNum === 1 ? { horizontal:'left', vertical:'middle', indent:1 } : { horizontal:'center', vertical:'middle' };
+    cell.border    = borda('B8DFC8');
+  });
 
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // ── Larguras ──
-  ws['!cols'] = [10,30,14,24,22,28,15,28,12,11,11,22,30].map(w => ({ wch: w }));
-
-  // ── Alturas das linhas ──
-  ws['!rows'] = [
-    { hpt: 28 }, // título
-    { hpt: 16 }, // subtítulo
-    { hpt: 22 }, // cabeçalho
-    ...filtrados.map(() => ({ hpt: 18 })),
-    { hpt: 18 }, // totais
-  ];
-
-  // ── Mesclar título e subtítulo ──
-  ws['!merges'] = [
-    { s:{r:0,c:0}, e:{r:0,c:12} },
-    { s:{r:1,c:0}, e:{r:1,c:12} },
-  ];
-
-  // ── Estilizar células ──
-  const nLinhas = wsData.length;
-  for (let r = 0; r < nLinhas; r++) {
-    for (let c = 0; c < 13; c++) {
-      const addr = XLSX.utils.encode_cell({r, c});
-      if (!ws[addr]) ws[addr] = { t:'s', v:'' };
-      const cell = ws[addr];
-
-      // Linha 1 — Título
-      if (r === 0) {
-        cell.s = {
-          font: { bold:true, sz:13, color:{ rgb: COR_BRANCO }, name:'Arial' },
-          fill: { fgColor:{ rgb: COR_VERDE_ESC }, patternType:'solid' },
-          alignment: { horizontal:'left', vertical:'center', indent:1 },
-        };
-        continue;
-      }
-
-      // Linha 2 — Subtítulo
-      if (r === 1) {
-        cell.s = {
-          font: { italic:true, sz:9, color:{ rgb: COR_BRANCO }, name:'Arial' },
-          fill: { fgColor:{ rgb: '2D9E60' }, patternType:'solid' },
-          alignment: { horizontal:'left', vertical:'center', indent:1 },
-        };
-        continue;
-      }
-
-      // Linha 3 — Cabeçalhos das colunas
-      if (r === 2) {
-        cell.s = {
-          font: { bold:true, sz:9, color:{ rgb: COR_BRANCO }, name:'Arial' },
-          fill: { fgColor:{ rgb: COR_VERDE_MED }, patternType:'solid' },
-          alignment: centro,
-          border: borda('3D6B4A'),
-        };
-        continue;
-      }
-
-      // Última linha — Totais
-      if (r === nLinhas - 1) {
-        const isPermuta = c === 10;
-        cell.s = {
-          font: { bold:true, sz:9, color:{ rgb: isPermuta ? '856404' : COR_VERDE_ESC }, name:'Arial' },
-          fill: { fgColor:{ rgb: isPermuta ? COR_AMARELO_BG : COR_VERDE_MUTED }, patternType:'solid' },
-          alignment: c === 0 ? { horizontal:'left', vertical:'center', indent:1 } : centro,
-          border: borda(COR_VERDE_BORDA),
-        };
-        continue;
-      }
-
-      // Linhas de dados
-      const par = (r % 2 === 1); // r=3 é ímpar → linha par de dados
-      const bgLinha = par ? COR_CINZA_BG : COR_BRANCO;
-      const f = filtrados[r - 3];
-
-      // Coluna Status (índice 9)
-      if (c === 9) {
-        const status = f?.status || '';
-        const bgS = status==='Ativo' ? COR_ATIVO_BG : status==='Afastado' ? COR_AFASTADO_BG : COR_INATIVO_BG;
-        const fgS = status==='Ativo' ? '1A6B3C' : status==='Afastado' ? '856404' : '721C24';
-        cell.s = {
-          font: { bold:true, sz:9, color:{ rgb: fgS }, name:'Arial' },
-          fill: { fgColor:{ rgb: bgS }, patternType:'solid' },
-          alignment: centro,
-          border: borda(),
-        };
-        continue;
-      }
-
-      // Coluna Permutado (índice 10)
-      if (c === 10) {
-        const perm = f?.permutado;
-        cell.s = {
-          font: { bold: perm, sz:9, color:{ rgb: perm ? '856404' : '888888' }, name:'Arial' },
-          fill: { fgColor:{ rgb: perm ? COR_AMARELO_BG : bgLinha }, patternType:'solid' },
-          alignment: centro,
-          border: borda(),
-        };
-        continue;
-      }
-
-      // Coluna Município Origem (índice 11)
-      if (c === 11 && f?.permutado) {
-        cell.s = {
-          font: { sz:9, color:{ rgb: '856404' }, name:'Arial' },
-          fill: { fgColor:{ rgb: COR_AMARELO_BG }, patternType:'solid' },
-          alignment: esquerda,
-          border: borda(),
-        };
-        continue;
-      }
-
-      // Coluna Matrícula (índice 0) — monospace
-      if (c === 0) {
-        cell.s = {
-          font: { sz:9, color:{ rgb: '555555' }, name:'Courier New' },
-          fill: { fgColor:{ rgb: bgLinha }, patternType:'solid' },
-          alignment: centro,
-          border: borda(),
-        };
-        continue;
-      }
-
-      // Demais células
-      cell.s = {
-        font: { sz:9, name:'Arial', bold: c===1 },
-        fill: { fgColor:{ rgb: bgLinha }, patternType:'solid' },
-        alignment: c === 8 ? centro : esquerda,
-        border: borda(),
-      };
-    }
-  }
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Funcionários');
-  XLSX.writeFile(wb, `GEE-Func_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast(`XLS exportado (${filtrados.length} registro${filtrados.length !== 1 ? 's' : ''}).`);
+  // ── Gerar e baixar ──
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `GEE-Func_${new Date().toISOString().slice(0,10)}.xlsx`;
+  a.click();
+  toast(`XLS exportado (${filtrados.length} registro${filtrados.length!==1?'s':''}).`);
 }
 
 function importXLS(file) {
@@ -2190,6 +2126,6 @@ document.getElementById('inputImportXLS').addEventListener('change', function() 
 carregarDados();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </body>
 </html>
