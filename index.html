@@ -1634,7 +1634,7 @@ function verFuncionario(id) {
       ${f.permutado ? `<div style="grid-column:1/-1"><div class="stat-label">Permuta</div><div><span class="badge badge-afastado">PERMUTADO</span> &nbsp; <span style="font-size:0.88rem">${esc(f.municipioOrigem || '—')}</span></div></div>` : ''}
     </div>`;
   document.getElementById('btnEditarVer').onclick = () => editarFuncionario(id);
-  document.getElementById('btnImprimirVer').onclick = () => imprimirPDF(id);
+  document.getElementById('btnImprimirVer').onclick = () => imprimirPDF(id).catch(e => toast('Erro ao imprimir: ' + e.message, false, true));
   document.getElementById('btnWhatsappVer').onclick = () => enviarWhatsapp(id);
   abrirModal('modalVer');
 }
@@ -1735,7 +1735,7 @@ function salvarFuncionario() {
 // ══════════════════════════════════════════
 // IMPRIMIR / PDF — funcionário individual
 // ══════════════════════════════════════════
-function imprimirPDF(id) {
+async function imprimirPDF(id) {
   const f = funcionarios.find(x => x.id === id);
   if (!f) return;
 
@@ -1744,6 +1744,19 @@ function imprimirPDF(id) {
   const fmt = v => esc(v || '—');
   const fmtData = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '—';
   const badgeCls = s => s === 'Ativo' ? 'print-badge-ativo' : s === 'Afastado' ? 'print-badge-afastado' : 'print-badge-inativo';
+
+  // Pré-carregar foto como blob para garantir que aparece na impressão
+  const fotoBase64 = getFoto(id);
+  let fotoHTML = '';
+  if (fotoBase64) {
+    await new Promise(resolve => {
+      const img = new Image();
+      img.onload = resolve;
+      img.onerror = resolve;
+      img.src = fotoBase64;
+    });
+    fotoHTML = `<img src="${fotoBase64}" style="width:52pt;height:52pt;border-radius:50%;object-fit:cover;border:2pt solid #b8dfc8;flex-shrink:0;display:block">`;
+  }
 
   document.getElementById('print-area').innerHTML = `
     <!-- CABEÇALHO -->
@@ -1772,7 +1785,7 @@ function imprimirPDF(id) {
     <!-- NOME E STATUS -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14pt;padding:10pt 14pt;background:#e8f5ee;border-radius:8pt;border:1pt solid #b8dfc8">
       <div style="display:flex;align-items:center;gap:12pt">
-        ${getFoto(id) ? `<img src="${getFoto(id)}" style="width:52pt;height:52pt;border-radius:50%;object-fit:cover;border:2pt solid #b8dfc8;flex-shrink:0">` : ''}
+        ${fotoHTML}
         <div>
           <div style="font-size:7pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2pt">Nome Completo</div>
           <div style="font-size:14pt;font-weight:700;color:#1a1d23">${fmt(f.nome)}</div>
@@ -1851,6 +1864,7 @@ function imprimirPDF(id) {
       GEE-Func · Gerência de Educação Especial · SEMED · Documento gerado em ${dataHora}
     </div>`;
 
+  await new Promise(r => setTimeout(r, 300));
   window.print();
 }
 
