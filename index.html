@@ -238,6 +238,47 @@
     .search-box { min-width: unset; }
   }
 
+  /* ── FOTO ── */
+  .foto-upload-wrap {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; gap: 1.2rem;
+    padding: 0.75rem 1rem; border: 1.5px dashed var(--cinza-borda);
+    border-radius: 8px; background: var(--cinza-bg); cursor: pointer;
+    transition: border 0.2s;
+  }
+  .foto-upload-wrap:hover { border-color: var(--verde-claro); background: var(--verde-muted); }
+  .foto-preview {
+    width: 64px; height: 64px; border-radius: 50%;
+    object-fit: cover; border: 2px solid var(--verde-borda);
+    background: white; flex-shrink: 0;
+  }
+  .foto-placeholder {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--verde-muted); border: 2px solid var(--verde-borda);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--verde);
+  }
+  .foto-info { flex: 1; }
+  .foto-info-titulo { font-size: 0.85rem; font-weight: 600; color: var(--texto); }
+  .foto-info-sub { font-size: 0.75rem; color: var(--cinza-texto); margin-top: 2px; }
+  .foto-remove {
+    font-size: 0.75rem; color: var(--danger); cursor: pointer;
+    background: none; border: none; padding: 0; margin-top: 4px;
+    font-family: inherit;
+  }
+  /* Foto no modal Ver */
+  .ver-foto {
+    width: 80px; height: 80px; border-radius: 50%;
+    object-fit: cover; border: 3px solid var(--verde-borda);
+    box-shadow: 0 2px 8px rgba(26,107,60,0.15);
+  }
+  .ver-foto-placeholder {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--verde-muted); border: 3px solid var(--verde-borda);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--verde);
+  }
+
   /* ── PERMUTA ── */
   .permuta-box {
     grid-column: 1 / -1;
@@ -815,6 +856,22 @@
           <label class="form-label">Nome Completo *</label>
           <input class="form-control" id="fNome" placeholder="Nome do funcionário">
         </div>
+        <div class="form-group full">
+          <label class="form-label">Foto do Funcionário</label>
+          <div class="foto-upload-wrap" onclick="document.getElementById('fFotoInput').click()">
+            <div id="fFotoPreviewWrap">
+              <div class="foto-placeholder">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+            </div>
+            <div class="foto-info">
+              <div class="foto-info-titulo">Clique para adicionar foto</div>
+              <div class="foto-info-sub">JPG ou PNG · máx. 500KB</div>
+              <button class="foto-remove" id="fFotoRemover" style="display:none" onclick="event.stopPropagation();removerFoto()">✕ Remover foto</button>
+            </div>
+            <input type="file" id="fFotoInput" accept="image/jpeg,image/png" style="display:none" onchange="previewFoto(this)">
+          </div>
+        </div>
         <div class="form-group">
           <label class="form-label">Cargo *</label>
           <input class="form-control" id="fCargo" placeholder="Ex: Professor de AEE" list="listaCargos">
@@ -1201,7 +1258,8 @@
 // ── JSONBin ──
 const JBIN_KEY  = '$2a$10$b8Gsh1wJ3S1wJdY1111ewOqCf6eKDMoKpaXn4lvvl7PhKOcKbOxVK';
 const JBIN_URL  = 'https://api.jsonbin.io/v3/b';
-const BIN_ID_KEY = 'gee_func_bin_id'; // localStorage só guarda o ID do bin
+const BIN_ID_KEY      = 'gee_func_bin_id';  // localStorage só guarda o ID do bin de funcionários
+const BIN_FOTO_ID_KEY = 'gee_func_foto_bin_id'; // ID do bin de fotos
 
 let funcionarios = [];
 let editandoId = null;
@@ -1244,9 +1302,9 @@ async function criarBin(dados) {
 async function carregarDados() {
   setLoading(true);
   try {
+    // ── Bin de funcionários ──
     let binId = localStorage.getItem(BIN_ID_KEY);
     if (!binId) {
-      // Primeira vez: criar bin vazio
       binId = await criarBin([]);
       localStorage.setItem(BIN_ID_KEY, binId);
     }
@@ -1256,6 +1314,16 @@ async function carregarDados() {
     if (!resp.ok) throw new Error('Erro ao carregar: ' + resp.status);
     const json = await resp.json();
     funcionarios = json.record.funcionarios || [];
+
+    // ── Bin de fotos ──
+    let fotoBinId = localStorage.getItem(BIN_FOTO_ID_KEY);
+    if (!fotoBinId) {
+      const fb = await criarBinFotos({});
+      localStorage.setItem(BIN_FOTO_ID_KEY, fb);
+    } else {
+      await carregarFotos(fotoBinId);
+    }
+
     render();
   } catch(e) {
     console.error(e);
@@ -1266,6 +1334,66 @@ async function carregarDados() {
     setLoading(false);
   }
 }
+
+// ── Bin de fotos ──
+let _fotos = {}; // { [id]: base64 }
+
+async function criarBinFotos(dados) {
+  const resp = await fetch(JBIN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Access-Key': JBIN_KEY,
+      'X-Bin-Name': 'GEE-Func-Fotos',
+      'X-Bin-Private': 'true',
+    },
+    body: JSON.stringify({ fotos: dados })
+  });
+  if (!resp.ok) throw new Error('Erro ao criar bin de fotos: ' + resp.status);
+  const json = await resp.json();
+  return json.metadata.id;
+}
+
+async function carregarFotos(fotoBinId) {
+  try {
+    const resp = await fetch(`${JBIN_URL}/${fotoBinId}/latest`, {
+      headers: { 'X-Access-Key': JBIN_KEY }
+    });
+    if (!resp.ok) return;
+    const json = await resp.json();
+    _fotos = json.record.fotos || {};
+  } catch(e) {
+    console.warn('Erro ao carregar fotos:', e);
+    _fotos = {};
+  }
+}
+
+let _fotoSaveTimer = null;
+function salvarFotos() {
+  clearTimeout(_fotoSaveTimer);
+  _fotoSaveTimer = setTimeout(_salvarFotosAgora, 1000);
+}
+
+async function _salvarFotosAgora() {
+  const fotoBinId = localStorage.getItem(BIN_FOTO_ID_KEY);
+  if (!fotoBinId) return;
+  try {
+    await fetch(`${JBIN_URL}/${fotoBinId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Access-Key': JBIN_KEY,
+      },
+      body: JSON.stringify({ fotos: _fotos })
+    });
+  } catch(e) {
+    console.error('Erro ao salvar fotos:', e);
+  }
+}
+
+function getFoto(id) { return _fotos[id] || ''; }
+function setFoto(id, base64) { _fotos[id] = base64; salvarFotos(); }
+function deleteFoto(id) { delete _fotos[id]; salvarFotos(); }
 
 // Salvar dados no JSONBin (debounced)
 let _saveTimer = null;
@@ -1446,6 +1574,9 @@ function abrirModalNovo() {
   document.getElementById('fPermutado').checked = false;
   document.getElementById('fMunicipioOrigem').value = '';
   togglePermuta();
+  _fotoAtualBase64 = '';
+  _fotoEditandoId = null;
+  resetFotoUI();
   abrirModal('modalForm');
 }
 
@@ -1468,6 +1599,10 @@ function editarFuncionario(id) {
   document.getElementById('fPermutado').checked = f.permutado || false;
   document.getElementById('fMunicipioOrigem').value = f.municipioOrigem || '';
   togglePermuta();
+  _fotoEditandoId = id;
+  const fotoExist = getFoto(id);
+  _fotoAtualBase64 = fotoExist;
+  resetFotoUI(fotoExist);
   fecharModal('modalVer');
   abrirModal('modalForm');
 }
@@ -1477,11 +1612,17 @@ function verFuncionario(id) {
   if (!f) return;
   const dataFmt = f.dataAdmissao ? new Date(f.dataAdmissao + 'T00:00:00').toLocaleDateString('pt-BR') : '—';
   const badgeCls = f.status === 'Ativo' ? 'badge-ativo' : f.status === 'Afastado' ? 'badge-afastado' : 'badge-inativo';
+  const fotoSalva = getFoto(id);
   document.getElementById('modalVerBody').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
       <div><div class="stat-label">Matrícula</div><div style="font-family:monospace;font-weight:600">${esc(f.matricula)}</div></div>
       <div><div class="stat-label">CPF</div><div>${esc(f.cpf || '—')}</div></div>
-      <div style="grid-column:1/-1"><div class="stat-label">Nome</div><div style="font-size:1.05rem;font-weight:600">${esc(f.nome)}</div></div>
+      <div style="grid-column:1/-1;display:flex;align-items:center;gap:1rem">
+        ${fotoSalva
+          ? `<img src="${fotoSalva}" class="ver-foto" alt="Foto de ${esc(f.nome)}">`
+          : `<div class="ver-foto-placeholder"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`}
+        <div><div class="stat-label">Nome</div><div style="font-size:1.05rem;font-weight:600">${esc(f.nome)}</div></div>
+      </div>
       <div><div class="stat-label">Cargo</div><span class="cargo-tag">${esc(f.cargo)}</span></div>
       <div><div class="stat-label">Status</div><span class="badge ${badgeCls}">${esc(f.status)}</span></div>
       <div><div class="stat-label">Setor / Função</div><div>${esc(f.setor || '—')}</div></div>
@@ -1507,6 +1648,7 @@ function pedirExclusao(id) {
 }
 
 function confirmarExclusao() {
+  deleteFoto(deletandoId);
   funcionarios = funcionarios.filter(f => f.id !== deletandoId);
   salvarDados();
   fecharModal('modalDel');
@@ -1575,9 +1717,13 @@ function salvarFuncionario() {
   if (editandoId) {
     const idx = funcionarios.findIndex(f => f.id === editandoId);
     funcionarios[idx] = { ...funcionarios[idx], ...dados };
+    if (_fotoAtualBase64) setFoto(editandoId, _fotoAtualBase64);
+    else deleteFoto(editandoId);
     toast('Funcionário atualizado com sucesso!');
   } else {
-    funcionarios.push({ id: uid(), ...dados });
+    const novoId = uid();
+    funcionarios.push({ id: novoId, ...dados });
+    if (_fotoAtualBase64) setFoto(novoId, _fotoAtualBase64);
     toast('Funcionário cadastrado com sucesso!');
   }
 
@@ -1957,6 +2103,44 @@ function toast(msg, sucesso = true, erro = false) {
   el.className = 'show' + (erro ? ' error' : '');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.className = '', 3200);
+}
+
+// ══════════════════════════════════════════
+// FOTO
+// ══════════════════════════════════════════
+let _fotoAtualBase64 = '';
+let _fotoEditandoId = null;
+
+function previewFoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 512 * 1024) { toast('Foto muito grande! Máx. 500KB.', false, true); input.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    _fotoAtualBase64 = e.target.result;
+    resetFotoUI(_fotoAtualBase64);
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetFotoUI(base64 = '') {
+  const wrap = document.getElementById('fFotoPreviewWrap');
+  const remover = document.getElementById('fFotoRemover');
+  if (base64) {
+    wrap.innerHTML = `<img src="${base64}" class="foto-preview" alt="Pré-visualização">`;
+    remover.style.display = 'block';
+  } else {
+    wrap.innerHTML = `<div class="foto-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
+    remover.style.display = 'none';
+  }
+}
+
+function removerFoto() {
+  _fotoAtualBase64 = '';
+  resetFotoUI();
+  document.getElementById('fFotoInput').value = '';
+  // Se estiver editando, remove do localStorage imediatamente
+  if (_fotoEditandoId) deleteFoto(_fotoEditandoId);
 }
 
 // ══════════════════════════════════════════
