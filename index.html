@@ -1771,9 +1771,12 @@ function imprimirPDF(id) {
 
     <!-- NOME E STATUS -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14pt;padding:10pt 14pt;background:#e8f5ee;border-radius:8pt;border:1pt solid #b8dfc8">
-      <div>
-        <div style="font-size:7pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2pt">Nome Completo</div>
-        <div style="font-size:14pt;font-weight:700;color:#1a1d23">${fmt(f.nome)}</div>
+      <div style="display:flex;align-items:center;gap:12pt">
+        ${getFoto(id) ? `<img src="${getFoto(id)}" style="width:52pt;height:52pt;border-radius:50%;object-fit:cover;border:2pt solid #b8dfc8;flex-shrink:0">` : ''}
+        <div>
+          <div style="font-size:7pt;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2pt">Nome Completo</div>
+          <div style="font-size:14pt;font-weight:700;color:#1a1d23">${fmt(f.nome)}</div>
+        </div>
       </div>
       <span class="print-badge ${badgeCls(f.status)}" style="font-size:9pt;padding:3pt 12pt">${fmt(f.status)}</span>
     </div>
