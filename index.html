@@ -1514,7 +1514,8 @@
 // ══════════════════════════════════════════
 
 // ── JSONBin ──
-const JBIN_KEY  = '$2a$10$b8Gsh1wJ3S1wJdY1111ewOqCf6eKDMoKpaXn4lvvl7PhKOcKbOxVK';
+const JBIN_KEY        = '$2a$10$b8Gsh1wJ3S1wJdY1111ewOqCf6eKDMoKpaXn4lvvl7PhKOcKbOxVK'; // Access Key
+const JBIN_MASTER_KEY = '$2a$10$r5a0ow0LDKemg9uIn5ueKegPkX.JS1A40NaaAqJApwQR4o0HSc2YG'; // Master Key
 const JBIN_URL  = 'https://api.jsonbin.io/v3/b';
 const BIN_ID_KEY      = 'gee_func_bin_id';
 const BIN_FOTO_ID_KEY = 'gee_func_foto_bin_id';
@@ -1601,7 +1602,7 @@ async function criarBinFotos(dados) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Access-Key': JBIN_KEY,
+      'X-Master-Key': JBIN_MASTER_KEY,
       'X-Bin-Name': 'GEE-Func-Fotos',
       'X-Bin-Private': 'true',
     },
@@ -1615,7 +1616,7 @@ async function criarBinFotos(dados) {
 async function carregarFotos(fotoBinId) {
   try {
     const resp = await fetch(`${JBIN_URL}/${fotoBinId}/latest`, {
-      headers: { 'X-Access-Key': JBIN_KEY }
+      headers: { 'X-Master-Key': JBIN_MASTER_KEY }
     });
     if (!resp.ok) return;
     const json = await resp.json();
@@ -1648,7 +1649,7 @@ async function _salvarFotosAgora() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'X-Access-Key': JBIN_KEY,
+        'X-Master-Key': JBIN_MASTER_KEY,
       },
       body: JSON.stringify({ fotos: _fotos })
     });
