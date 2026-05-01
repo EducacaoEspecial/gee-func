@@ -559,7 +559,7 @@
     <button class="login-btn" onclick="tentarLogin()">Entrar</button>
     <div class="login-error" id="loginErro"></div>
     <div class="login-footer">GEE-Func · Gerência de Educação Especial · SEMED</div>
-    <div style="font-size:0.65rem;color:var(--cinza-texto);margin-top:4px;text-align:center" id="versaoLogin">v2026.05.01.1015</div>
+    <div style="font-size:0.65rem;color:var(--cinza-texto);margin-top:4px;text-align:center" id="versaoLogin">v2026.05.01.1026</div>
   </div>
 </div>
 
@@ -577,7 +577,7 @@
     <div>
       <div class="header-title">GEE-Func</div>
       <div class="header-subtitle">Gerência de Educação Especial · Funcionários</div>
-      <div style="font-size:0.62rem;opacity:0.5;font-weight:300;letter-spacing:0.03em;margin-top:1px" id="versaoSistema">v2026.05.01.1015</div>
+      <div style="font-size:0.62rem;opacity:0.5;font-weight:300;letter-spacing:0.03em;margin-top:1px" id="versaoSistema">v2026.05.01.1026</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:0.75rem">
@@ -1612,7 +1612,7 @@
 // ESTADO
 // ══════════════════════════════════════════
 
-const VERSAO_SISTEMA = 'v2026.05.01.1015';
+const VERSAO_SISTEMA = 'v2026.05.01.1026';
 
 // ── JSONBin ──
 const JBIN_KEY        = '$2a$10$b8Gsh1wJ3S1wJdY1111ewOqCf6eKDMoKpaXn4lvvl7PhKOcKbOxVK'; // Access Key
@@ -2022,8 +2022,8 @@ function verFuncionario(id) {
       </div>
       <div><div class="stat-label">Cargo</div><span class="cargo-tag">${esc(f.cargo)}</span></div>
       <div><div class="stat-label">Status</div><span class="badge ${badgeCls}">${esc(f.status)}</span></div>
-      <div><div class="stat-label">Setor / Função</div><div>${esc(f.setor || '—')}</div></div>
-      <div><div class="stat-label">Unidade / Escola</div><div>${esc(f.unidade || '—')}</div></div>
+      <div><div class="stat-label">Função</div><div>${esc(f.setor || '—')}</div></div>
+      <div><div class="stat-label">Setor</div><div>${esc(f.unidade || '—')}</div></div>
       <div><div class="stat-label">Telefone</div><div>${f.telefone ? `<a href="tel:${f.telefone}" style="color:var(--verde)">${esc(f.telefone)}</a>` : '—'}</div></div>
       <div><div class="stat-label">E-mail</div><div>${f.email ? `<a href="mailto:${f.email}" style="color:var(--verde)">${esc(f.email)}</a>` : '—'}</div></div>
       <div><div class="stat-label">Data de Admissão</div><div>${dataFmt}</div></div>
@@ -2222,11 +2222,11 @@ async function imprimirPDF(id) {
       </tr>
       <tr>
         <td style="padding:7pt 10pt;border:1pt solid #dde1e7;border-top:none;vertical-align:top">
-          <div class="print-field-lbl">Setor / Função</div>
+          <div class="print-field-lbl">Função</div>
           <div class="print-field-val">${fmt(f.setor)}</div>
         </td>
         <td style="padding:7pt 10pt;border:1pt solid #dde1e7;border-top:none;border-left:none;vertical-align:top">
-          <div class="print-field-lbl">Unidade / Escola</div>
+          <div class="print-field-lbl">Setor</div>
           <div class="print-field-val">${fmt(f.unidade)}</div>
         </td>
       </tr>
@@ -2705,8 +2705,8 @@ Olá! 👋 Segue sua ficha de cadastro no sistema *GEE-Func*. Por favor, confirm
 *DADOS FUNCIONAIS*
 ▸ Cargo: ${fmt(f.cargo)}
 ▸ Data de admissão: ${fmtData(f.dataAdmissao)}
-▸ Setor / Função: ${fmt(f.setor)}
-▸ Unidade / Escola: ${fmt(f.unidade)}
+▸ Função: ${fmt(f.setor)}
+▸ Setor: ${fmt(f.unidade)}
 
 *CONTATO*
 ▸ Telefone / WhatsApp: ${fmt(f.telefone)}
@@ -2821,7 +2821,7 @@ async function gerarRelatorioPDF() {
         <div><div class="rel-field-lbl">Cargo</div><div class="rel-field-val">${fmt(f.cargo)}</div></div>
         <div><div class="rel-field-lbl">Admissão</div><div class="rel-field-val">${fmtData(f.dataAdmissao)}</div></div>
         <div><div class="rel-field-lbl">Setor</div><div class="rel-field-val">${fmt(f.setor)}</div></div>
-        <div><div class="rel-field-lbl">Unidade / Escola</div><div class="rel-field-val">${fmt(f.unidade)}</div></div>
+        <div><div class="rel-field-lbl">Setor</div><div class="rel-field-val">${fmt(f.unidade)}</div></div>
         <div><div class="rel-field-lbl">Telefone</div><div class="rel-field-val">${fmt(f.telefone)}</div></div>
         <div><div class="rel-field-lbl">E-mail</div><div class="rel-field-val">${fmt(f.email)}</div></div>
         ${f.permutado ? `<div class="rel-field-full"><div class="rel-field-lbl">Município de Origem</div><div class="rel-field-val">${fmt(f.municipioOrigem)}</div></div>` : ''}
@@ -2891,7 +2891,7 @@ async function gerarRelatorioPDF() {
           <th>Matrícula</th>
           <th>Nome</th>
           <th>Cargo</th>
-          <th>Unidade / Escola</th>
+          <th>Setor</th>
           <th>Admissão</th>
           <th>Status</th>
         </tr>
@@ -2977,7 +2977,6 @@ carregarVersao();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </body>
 </html>
-
 
 
 
