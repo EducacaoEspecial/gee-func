@@ -1695,7 +1695,7 @@ async function carregarFotos(fotoBinId) {
 let _fotoSaveTimer = null;
 function salvarFotos() {
   clearTimeout(_fotoSaveTimer);
-  _fotoSaveTimer = setTimeout(_salvarFotosAgora, 10000);
+  _fotoSaveTimer = setTimeout(_salvarFotosAgora, 60000);
 }
 
 async function _salvarFotosAgora() {
@@ -2967,7 +2967,6 @@ carregarVersao();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </body>
 </html>
-
 
 
 
