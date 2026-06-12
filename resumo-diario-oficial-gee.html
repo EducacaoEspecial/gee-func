@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resumo DOPMCG v.12-06-2026-10h35</title>
+  <title>Resumo DOPMCG v.12-06-2026-10h42</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -283,10 +283,17 @@
 <div id="toastEl" class="toast"></div>
 
 <script>
+window.addEventListener('load', function() {
+
+if (typeof pdfjsLib === 'undefined') {
+  alert('Erro: PDF.js nao carregou. Verifique sua conexao com a internet.');
+  return;
+}
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfText = '';
-var apiKey = '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';
+var apiKey = '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';
 
 // API Key embutida no codigo — altere a variavel apiKey no inicio do script
 var metaEdicao = { data: '', num: '' };
@@ -712,6 +719,8 @@ function toast(msg) {
   t.textContent = msg; t.className = 'toast show';
   setTimeout(function(){ t.className = 'toast'; }, 3500);
 }
+
+}); // fim window.onload
 </script>
 </body>
 </html>
