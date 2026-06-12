@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resumo DOPMCG v.12-06-2026-10h55</title>
+  <title>Resumo DOPMCG v.12-06-26-11h04</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -286,7 +286,7 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfText = '';
-var apiKey = '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';
+var apiKey = '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';
 
 // API Key embutida no codigo — altere a variavel apiKey no inicio do script
 var metaEdicao = { data: '', num: '' };
@@ -411,38 +411,22 @@ function gerarResumo() {
   setSpinner(true, 'Extraindo texto do PDF...', 'Aguarde, isso pode levar alguns segundos');
 
   // limitar texto para nao exceder contexto (~60k chars)
-  var textoEnvio = pdfText.length > 60000 ? pdfText.substring(0, 60000) + '
-[... texto truncado por tamanho ...]' : pdfText;
+  var textoEnvio = pdfText.length > 60000 ? pdfText.substring(0, 60000) + ' [... texto truncado por tamanho ...]' : pdfText;
 
-  var prompt = 'Voce e um assistente especializado em analise de Diario Oficial do municipio de Campos dos Goytacazes, RJ.
+  var prompt =
+    'Voce e um assistente especializado em analise de Diario Oficial do municipio de Campos dos Goytacazes, RJ. ' +
+    'Analise o texto do Diario Oficial abaixo e gere um resumo estruturado com foco nas seguintes areas: ' +
+    '1. EDUCACAO ESPECIAL E INCLUSIVA - Portarias, resolucoes, nomeacoes ou exoneracoes de mediadores, cuidadores, professores de sala de recursos, qualquer ato relacionado a alunos com necessidades especiais (NEE/PCD). ' +
+    '2. EDUCACAO - Atos administrativos gerais sobre a rede municipal de ensino, servidores, escolas. ' +
+    '3. SECRETARIA DE EDUCACAO (SEDUCT) - Qualquer ato envolvendo a secretaria. ' +
+    '4. OUTROS DESTAQUES - Demais atos relevantes para a administracao publica municipal. ' +
+    'Para cada item encontrado, informe: o tipo de ato (portaria, decreto, resolucao etc), o numero se houver, e o resumo do conteudo. ' +
+    'Se nao houver publicacoes em alguma categoria, informe "Nenhuma publicacao encontrada nesta edicao". ' +
+    'Seja objetivo e claro. Use linguagem formal. ' +
+    (obs ? 'Observacao adicional do solicitante: ' + obs + ' ' : '') +
+    'TEXTO DO DIARIO OFICIAL: ' + textoEnvio;
 
-' +
-    'Analise o texto do Diario Oficial abaixo e gere um resumo estruturado com foco nas seguintes areas:
-' +
-    '1. EDUCACAO ESPECIAL E INCLUSIVA - Portarias, resolucoes, nomeacoes ou exoneracoes de mediadores, cuidadores, professores de sala de recursos, qualquer ato relacionado a alunos com necessidades especiais (NEE/PCD)
-' +
-    '2. EDUCACAO - Atos administrativos gerais sobre a rede municipal de ensino, servidores, escolas
-' +
-    '3. SECRETARIA DE EDUCACAO (SEDUCT) - Qualquer ato envolvendo a secretaria
-' +
-    '4. OUTROS DESTAQUES - Demais atos relevantes para a administracao publica municipal
-
-' +
-    'Para cada item encontrado, informe: o tipo de ato (portaria, decreto, resolucao etc), o numero se houver, e o resumo do conteudo.
-' +
-    'Se nao houver publicacoes em alguma categoria, informe "Nenhuma publicacao encontrada nesta edicao".
-' +
-    'Seja objetivo e claro. Use linguagem formal.
-' +
-    (obs ? 'Observacao adicional do solicitante: ' + obs + '
-' : '') +
-    '
-
-TEXTO DO DIARIO OFICIAL:
-
-' + textoEnvio;
-
-  setTimeout(function(){
+    setTimeout(function(){
     setSpinner(true, 'Enviando para analise com IA...', 'A IA esta lendo o Diario Oficial...');
   }, 800);
 
