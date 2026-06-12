@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resumo DOCG v.12-06-26-11h20</title>
+  <title>Resumo DOCG v.12-06-26-11h30</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -286,7 +286,7 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfText = '';
-var apiKey = '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';
+var apiKey = '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';
 
 // API Key embutida no codigo — altere a variavel apiKey no inicio do script
 var metaEdicao = { data: '', num: '' };
@@ -484,7 +484,7 @@ function renderResumo(texto, dataEd, numEd) {
   body.innerHTML = '';
 
   // tentar dividir por secoes
-  var linhas = texto.split(\n);
+  var linhas = texto.split('\n');
   var secaoAtual = null;
   var conteudoAtual = [];
   var secoesParsed = {};
@@ -576,7 +576,7 @@ function baixarPDF() {
     { key: 'OUTROS',            label: '4. Outros destaques' }
   ];
 
-  var linhas = resumoData.texto.split(\n);
+  var linhas = resumoData.texto.split('\n');
   var secaoAtual = null;
   var conteudoAtual = [];
   var secoesParsed = {};
