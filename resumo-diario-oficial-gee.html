@@ -286,7 +286,7 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfText = '';
-var apiKey = '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';
+var apiKey = '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';
 
 // API Key embutida no codigo — altere a variavel apiKey no inicio do script
 var metaEdicao = { data: '', num: '' };
@@ -364,7 +364,7 @@ function processarPDF(file) {
         document.getElementById('fileInfo').className = 'file-info show';
         dz.style.display = 'none';
         document.getElementById('cardConfig').style.display = 'block';
-        document.getElementById('dataEdicao').value = new Date().toISOString().slice(0,10);
+        // data extraida automaticamente do texto do PDF
         // extrair data e numero da edicao automaticamente
         var primeiras = pages[0] ? pages[0].substring(0, 2000) : '';
         extrairMeta(primeiras);
