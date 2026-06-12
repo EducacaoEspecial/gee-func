@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resumo DOPMCG v.12-06-26-11h04</title>
+  <title>Resumo DOPMCG v.12-06-2026-11h11</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -286,7 +286,7 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfText = '';
-var apiKey = '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';
+var apiKey = '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';
 
 // API Key embutida no codigo — altere a variavel apiKey no inicio do script
 var metaEdicao = { data: '', num: '' };
@@ -484,8 +484,7 @@ function renderResumo(texto, dataEd, numEd) {
   body.innerHTML = '';
 
   // tentar dividir por secoes
-  var linhas = texto.split('
-');
+  var linhas = texto.split(\n);
   var secaoAtual = null;
   var conteudoAtual = [];
   var secoesParsed = {};
@@ -496,8 +495,7 @@ function renderResumo(texto, dataEd, numEd) {
     var found = false;
     for (var j = 0; j < secoes.length; j++) {
       if (linha.toUpperCase().indexOf(secoes[j].key) !== -1 && linha.length < 80) {
-        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('
-').trim();
+        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
         secaoAtual = secoes[j].key;
         conteudoAtual = [];
         found = true;
@@ -506,8 +504,7 @@ function renderResumo(texto, dataEd, numEd) {
     }
     if (!found && secaoAtual) conteudoAtual.push(linha);
   }
-  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('
-').trim();
+  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
 
   var temSecao = Object.keys(secoesParsed).length > 0;
 
@@ -579,8 +576,7 @@ function baixarPDF() {
     { key: 'OUTROS',            label: '4. Outros destaques' }
   ];
 
-  var linhas = resumoData.texto.split('
-');
+  var linhas = resumoData.texto.split(\n);
   var secaoAtual = null;
   var conteudoAtual = [];
   var secoesParsed = {};
@@ -591,8 +587,7 @@ function baixarPDF() {
     var found = false;
     for (var j = 0; j < secoes.length; j++) {
       if (linha.toUpperCase().indexOf(secoes[j].key) !== -1 && linha.length < 80) {
-        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('
-').trim();
+        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
         secaoAtual = secoes[j].key;
         conteudoAtual = [];
         found = true; break;
@@ -600,8 +595,7 @@ function baixarPDF() {
     }
     if (!found && secaoAtual) conteudoAtual.push(linha);
   }
-  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('
-').trim();
+  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
 
   var temSecao = Object.keys(secoesParsed).length > 0;
 
