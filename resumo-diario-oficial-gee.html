@@ -1,9 +1,9 @@
 <!DOCTYPE html> 
-<html lang="pt-BR"> 
-<head>  
+<html lang="pt-BR">
+<head> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resumo DO v.12-06-26-12h00</title>
+  <title>Resumo DO v.12-06-26-12h07</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -286,7 +286,7 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfText = '';
-var apiKey = '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';
+var apiKey = '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';
 
 // API Key embutida no codigo — altere a variavel apiKey no inicio do script
 var metaEdicao = { data: '', num: '' };
@@ -357,7 +357,7 @@ function processarPDF(file) {
           document.getElementById('fileName').textContent = file.name;
           document.getElementById('filePages').textContent = numPages + (numPages === 1 ? ' pagina' : ' paginas');
           document.getElementById('fileInfo').className = 'file-info show';
-          dz.style.display = 'none';
+          document.getElementById('dropzone').style.display = 'none';
           document.getElementById('cardConfig').style.display = 'block';
           var primeiras = pages[0] ? pages[0].substring(0, 2000) : '';
           extrairMeta(primeiras);
@@ -379,7 +379,7 @@ function resetFile() {
   pdfText = '';
   document.getElementById('fileInput').value = '';
   document.getElementById('fileInfo').className = 'file-info';
-  dz.style.display = '';
+  document.getElementById('dropzone').style.display = '';
   document.getElementById('cardConfig').style.display = 'none';
   document.getElementById('resultadoWrap').className = 'resultado-wrap';
   document.getElementById('cardSpinner').style.display = 'none';
@@ -495,7 +495,7 @@ function renderResumo(texto, dataEd, numEd) {
     var found = false;
     for (var j = 0; j < secoes.length; j++) {
       if (linha.toUpperCase().indexOf(secoes[j].key) !== -1 && linha.length < 80) {
-        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
+        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
         secaoAtual = secoes[j].key;
         conteudoAtual = [];
         found = true;
@@ -504,7 +504,7 @@ function renderResumo(texto, dataEd, numEd) {
     }
     if (!found && secaoAtual) conteudoAtual.push(linha);
   }
-  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
+  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
 
   var temSecao = Object.keys(secoesParsed).length > 0;
 
@@ -587,7 +587,7 @@ function baixarPDF() {
     var found = false;
     for (var j = 0; j < secoes.length; j++) {
       if (linha.toUpperCase().indexOf(secoes[j].key) !== -1 && linha.length < 80) {
-        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
+        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
         secaoAtual = secoes[j].key;
         conteudoAtual = [];
         found = true; break;
@@ -595,7 +595,7 @@ function baixarPDF() {
     }
     if (!found && secaoAtual) conteudoAtual.push(linha);
   }
-  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
+  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
 
   var temSecao = Object.keys(secoesParsed).length > 0;
 
