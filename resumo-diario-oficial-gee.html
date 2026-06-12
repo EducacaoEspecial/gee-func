@@ -286,7 +286,7 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfText = '';
-var apiKey = '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';
+var apiKey = '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';
 
 // API Key embutida no codigo — altere a variavel apiKey no inicio do script
 var metaEdicao = { data: '', num: '' };
@@ -340,39 +340,45 @@ function handleFile(input) {
 }
 
 function processarPDF(file) {
+  if (typeof pdfjsLib === 'undefined') {
+    toast('Biblioteca PDF nao carregou. Verifique sua conexao com a internet.');
+    return;
+  }
+  toast('Lendo PDF...');
   var reader = new FileReader();
+  reader.onerror = function() { toast('Erro ao ler o arquivo. Tente novamente.'); };
   reader.onload = function(e) {
-    var data = new Uint8Array(e.target.result);
-    pdfjsLib.getDocument({data: data}).promise.then(function(pdf) {
-      var numPages = pdf.numPages;
-      var promises = [];
-      for (var i = 1; i <= numPages; i++) {
-        promises.push(pdf.getPage(i).then(function(page){
-          return page.getTextContent().then(function(tc){
-            return tc.items.map(function(item){ return item.str; }).join(' ');
-          });
-        }));
-      }
-      Promise.all(promises).then(function(pages) {
-        pdfText = pages.join('
-
---- PAGINA ---
-
-');
-        document.getElementById('fileName').textContent = file.name;
-        document.getElementById('filePages').textContent = numPages + (numPages === 1 ? ' pagina' : ' paginas');
-        document.getElementById('fileInfo').className = 'file-info show';
-        dz.style.display = 'none';
-        document.getElementById('cardConfig').style.display = 'block';
-        // data extraida automaticamente do texto do PDF
-        // extrair data e numero da edicao automaticamente
-        var primeiras = pages[0] ? pages[0].substring(0, 2000) : '';
-        extrairMeta(primeiras);
-        toast('PDF carregado com sucesso!');
+    try {
+      var data = new Uint8Array(e.target.result);
+      pdfjsLib.getDocument({data: data}).promise.then(function(pdf) {
+        var numPages = pdf.numPages;
+        var promises = [];
+        for (var i = 1; i <= numPages; i++) {
+          promises.push(pdf.getPage(i).then(function(page){
+            return page.getTextContent().then(function(tc){
+              return tc.items.map(function(item){ return item.str; }).join(' ');
+            });
+          }));
+        }
+        Promise.all(promises).then(function(pages) {
+          pdfText = pages.join('\n\n--- PAGINA ---\n\n');
+          document.getElementById('fileName').textContent = file.name;
+          document.getElementById('filePages').textContent = numPages + (numPages === 1 ? ' pagina' : ' paginas');
+          document.getElementById('fileInfo').className = 'file-info show';
+          dz.style.display = 'none';
+          document.getElementById('cardConfig').style.display = 'block';
+          var primeiras = pages[0] ? pages[0].substring(0, 2000) : '';
+          extrairMeta(primeiras);
+          toast('PDF carregado! Clique em Gerar resumo com IA.');
+        }).catch(function(err) {
+          toast('Erro nas paginas: ' + err.message);
+        });
+      }).catch(function(err) {
+        toast('Erro ao abrir PDF: ' + err.message);
       });
-    }).catch(function(err){
-      toast('Erro ao ler o PDF: ' + err.message);
-    });
+    } catch(err) {
+      toast('Erro inesperado: ' + err.message);
+    }
   };
   reader.readAsArrayBuffer(file);
 }
