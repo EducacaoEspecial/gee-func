@@ -3,7 +3,7 @@
 <head> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resumo DO v.12-06-26-11h30</title>
+  <title>Resumo DO v.12-06-26-11h54</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -286,7 +286,7 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 var pdfText = '';
-var apiKey = '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';
+var apiKey = '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';
 
 // API Key embutida no codigo — altere a variavel apiKey no inicio do script
 var metaEdicao = { data: '', num: '' };
@@ -495,7 +495,7 @@ function renderResumo(texto, dataEd, numEd) {
     var found = false;
     for (var j = 0; j < secoes.length; j++) {
       if (linha.toUpperCase().indexOf(secoes[j].key) !== -1 && linha.length < 80) {
-        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
+        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
         secaoAtual = secoes[j].key;
         conteudoAtual = [];
         found = true;
@@ -504,7 +504,7 @@ function renderResumo(texto, dataEd, numEd) {
     }
     if (!found && secaoAtual) conteudoAtual.push(linha);
   }
-  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
+  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
 
   var temSecao = Object.keys(secoesParsed).length > 0;
 
@@ -587,7 +587,7 @@ function baixarPDF() {
     var found = false;
     for (var j = 0; j < secoes.length; j++) {
       if (linha.toUpperCase().indexOf(secoes[j].key) !== -1 && linha.length < 80) {
-        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
+        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
         secaoAtual = secoes[j].key;
         conteudoAtual = [];
         found = true; break;
@@ -595,7 +595,7 @@ function baixarPDF() {
     }
     if (!found && secaoAtual) conteudoAtual.push(linha);
   }
-  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join(\n').trim();
+  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
 
   var temSecao = Object.keys(secoesParsed).length > 0;
 
