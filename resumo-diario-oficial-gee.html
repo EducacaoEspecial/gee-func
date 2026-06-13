@@ -1,568 +1,1303 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resumo DO GEE/SEDUCT v.12-06-26-12h56</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    :root{
-      --bg:#EEF2F7;--surface:#fff;--surface2:#F4F6FA;--surface3:#E8EDF5;
-      --border:#D0D8E8;--border-md:#B0BDD4;--text:#111827;--text-muted:#5A6785;
-      --text-hint:#94A3B8;--accent:#1B4F9B;--accent2:#2563EB;--accent-hover:#163F7A;
-      --accent-light:#DBEAFE;--accent-mid:#93C5FD;
-      --danger:#991B1B;--danger-light:#FEE2E2;
-      --success:#166534;--success-light:#DCFCE7;
-      --radius:12px;--radius-sm:8px;--radius-xs:5px;
-      --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow:0 4px 12px rgba(0,0,0,.08);
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumidor de PDF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --surface2: #f0efeb;
+    --border: #e0dfd9;
+    --border2: #cccbc4;
+    --text: #1a1a18;
+    --text2: #6b6b66;
+    --text3: #9a9a94;
+    --accent: #2d6a4f;
+    --accent-light: #e8f5ef;
+    --accent-text: #1b4332;
+    --danger: #9b2335;
+    --danger-light: #fdf0f2;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  header p {
+    font-size: 14px;
+    color: var(--text2);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Drop zone */
+  #drop-zone {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    background: var(--surface);
+  }
+  #drop-zone:hover, #drop-zone.over {
+    background: var(--accent-light);
+    border-color: var(--accent);
+  }
+  #drop-zone input { display: none; }
+
+  .drop-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    background: var(--surface2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .drop-icon svg { width: 24px; height: 24px; stroke: var(--text2); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  #drop-zone p {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 14px;
+  }
+
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-family: inherit;
+  }
+  .upload-btn:hover { background: var(--surface2); }
+
+  /* Controle de frases */
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .control-row label {
+    font-size: 13px;
+    color: var(--text2);
+    white-space: nowrap;
+  }
+  .control-row input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 4px;
+    cursor: pointer;
+  }
+  .control-row span {
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 24px;
+    text-align: right;
+  }
+
+  /* Mensagens */
+  #loading-msg {
+    display: none;
+    font-size: 14px;
+    color: var(--text2);
+    padding: 12px 0;
+    text-align: center;
+  }
+  #error-msg {
+    display: none;
+    font-size: 14px;
+    color: var(--danger);
+    background: var(--danger-light);
+    border: 1px solid #f5c6cc;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin-top: 0.75rem;
+  }
+
+  /* Cards de estatísticas */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .stat {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+  .stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  /* Abas */
+  .tab-bar {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+  .tab {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.12s;
+    font-family: inherit;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Resumo */
+  #summary-text {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  /* Seções */
+  .sec-item {
+    border-left: 2px solid var(--border2);
+    padding-left: 14px;
+    margin-bottom: 16px;
+  }
+  .sec-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .sec-text {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* Keywords */
+  #keywords-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .kw {
+    background: var(--accent-light);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 999px;
+    letter-spacing: 0.1px;
+  }
+
+  .keyword-control {
+    margin-top: 1rem;
+  }
+  .kw-head strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .kw-head p, .kw-tab-note {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 12px;
+  }
+  .kw-input-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .kw-input-row input {
+    flex: 1;
+    min-width: 220px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+  .kw-input-row input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .kw-action-btn {
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: white;
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .kw-action-btn.secondary {
+    border-color: var(--border2);
+    background: var(--surface);
+    color: var(--text2);
+  }
+  #custom-keywords-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 30px;
+    align-items: center;
+  }
+  .kw-empty {
+    font-size: 13px;
+    color: var(--text3);
+  }
+  .user-kw {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #cfe6dc;
+  }
+  .kw-remove {
+    border: none;
+    background: transparent;
+    color: var(--accent-text);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 0 1px 2px;
+  }
+  .auto-kw {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .auto-kw:hover {
+    filter: brightness(0.96);
+    transform: translateY(-1px);
+  }
+
+  /* Resultado oculto por padrão */
+  #result-card { display: none; }
+
+  /* Nome do arquivo */
+  #file-name {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* Spinner simples */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+
+
+  .summary-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: -0.25rem 0 1.25rem;
+  }
+
+  .print-summary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.12s, transform 0.12s;
+  }
+  .print-summary-btn:hover { opacity: 0.92; }
+  .print-summary-btn:active { transform: translateY(1px); }
+  .print-summary-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .print-summary-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .print-area { display: none; }
+
+  @media print {
+    @page { margin: 18mm; }
+    body {
+      background: #fff !important;
+      color: #000 !important;
+      padding: 0 !important;
+      font-family: Arial, sans-serif !important;
+      font-size: 12pt !important;
+      line-height: 1.5 !important;
     }
-    body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
-    header{background:linear-gradient(135deg,#1B4F9B 0%,#1e40af 100%);position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(27,79,155,.25);}
-    .hi{max-width:800px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;}
-    .hl{width:40px;height:40px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.25);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .hl svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-    .ht{flex:1;min-width:0;}
-    .ht h1{font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .ht p{font-size:11px;color:rgba(255,255,255,.65);}
-    .bs{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border:1.5px solid rgba(255,255,255,.35);border-radius:20px;background:rgba(255,255,255,.12);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
-    .bs svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    @media(max-width:480px){.ht p{display:none;}.bs span{display:none;}.bs{padding:6px 8px;}}
-    .main{max-width:800px;margin:0 auto;padding:20px 14px 60px;display:flex;flex-direction:column;gap:14px;}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow-sm);}
-    .ch{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
-    .ci{width:32px;height:32px;background:var(--accent-light);border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .ci svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .ct{font-size:13px;font-weight:700;color:var(--text);}
-    .cs{font-size:11px;color:var(--text-muted);}
-    .dz{border:2px dashed var(--border-md);border-radius:var(--radius-sm);padding:36px 20px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;}
-    .dz:hover,.dz.over{border-color:var(--accent2);background:var(--accent-light);}
-    .dz svg{width:40px;height:40px;stroke:var(--text-hint);fill:none;stroke-width:1.5;}
-    .dz p{font-size:13px;font-weight:600;color:var(--text-muted);}
-    .dz small{font-size:12px;color:var(--text-hint);}
-    .fi{display:none;background:var(--success-light);border:1px solid #86EFAC;border-radius:var(--radius-sm);padding:10px 14px;align-items:center;gap:10px;}
-    .fi.show{display:flex;}
-    .fi svg{width:16px;height:16px;stroke:var(--success);fill:none;stroke-width:2;flex-shrink:0;}
-    .fi-n{font-size:13px;font-weight:600;color:var(--success);flex:1;}
-    .fi-p{font-size:12px;color:var(--success);opacity:.8;}
-    .field{margin-bottom:12px;}
-    .field:last-child{margin-bottom:0;}
-    .field label{display:block;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
-    .field textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;color:var(--text);background:var(--surface);font-family:inherit;outline:none;resize:vertical;min-height:80px;line-height:1.6;}
-    .field textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);background:var(--surface);color:var(--text);font-family:inherit;line-height:1;transition:background .15s;width:100%;}
-    .btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .btn-p{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(27,79,155,.25);}
-    .btn-p:hover{background:var(--accent-hover);}
-    .btn-s{background:var(--success);border-color:var(--success);color:#fff;}
-    .btn-g{border-color:transparent;background:transparent;color:var(--text-muted);}
-    .btn-g:hover{background:var(--surface3);}
-    .btn-row{display:flex;flex-wrap:wrap;gap:8px;}
-    .sp{display:none;flex-direction:column;align-items:center;gap:14px;padding:30px 0;}
-    .sp.show{display:flex;}
-    .spin{width:44px;height:44px;border:4px solid var(--accent-light);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
-    @keyframes spin{to{transform:rotate(360deg);}}
-    .sm{font-size:13px;color:var(--text-muted);font-weight:500;}
-    .rw{display:none;}
-    .rw.show{display:block;}
-    .rh{background:linear-gradient(135deg,#1B4F9B 0%,#1e40af 100%);border-radius:var(--radius) var(--radius) 0 0;padding:16px 20px;color:#fff;}
-    .rh h2{font-size:15px;font-weight:700;margin-bottom:2px;}
-    .rh p{font-size:12px;color:rgba(255,255,255,.7);}
-    .rb{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:20px;}
-    .rs{margin-bottom:20px;}
-    .rs:last-child{margin-bottom:0;}
-    .rst{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--accent-light);}
-    .rsb{font-size:13.5px;color:var(--text);line-height:1.8;white-space:pre-wrap;}
-    .meta{display:inline-flex;align-items:center;gap:5px;background:var(--accent-light);border:1px solid var(--accent-mid);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:600;color:var(--accent);margin:0 6px 6px 0;}
-    .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px);}
-    .mo.open{display:flex;}
-    .md{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.2);width:100%;max-width:460px;overflow:hidden;}
-    .mh{background:linear-gradient(135deg,#1B4F9B 0%,#1e40af 100%);padding:20px 22px 16px;}
-    .mht{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-    .man{font-size:15px;font-weight:700;color:#fff;}
-    .mv{font-size:11px;color:rgba(255,255,255,.55);background:rgba(255,255,255,.12);border-radius:10px;padding:2px 9px;}
-    .mc{background:rgba(255,255,255,.15);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:16px;}
-    .mo-org{font-size:11px;color:rgba(255,255,255,.65);}
-    .mb{padding:20px 22px;}
-    .md-desc{font-size:13.5px;color:#334155;line-height:1.7;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #E2E8F0;}
-    .cr{display:flex;flex-direction:column;gap:12px;}
-    .crr{display:flex;align-items:center;gap:12px;}
-    .ca{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
-    .ca svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;}
-    .cl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;margin-bottom:1px;}
-    .cn{font-size:13.5px;font-weight:700;color:#0F172A;}
-    .co{font-size:12px;color:#64748B;}
-    .mf{padding:12px 22px;background:#F8FAFC;border-top:1px solid #E2E8F0;font-size:11.5px;color:#94A3B8;text-align:center;}
-    .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:#0F172A;color:#fff;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:500;opacity:0;transition:all .3s ease;z-index:9999;max-width:90vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.2);}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  </style>
+    body * { visibility: hidden !important; }
+    #print-area, #print-area * { visibility: visible !important; }
+    #print-area {
+      display: block !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    #print-area h1 {
+      font-size: 18pt !important;
+      margin-bottom: 4mm !important;
+      color: #000 !important;
+    }
+    #print-area .print-meta {
+      font-size: 10pt !important;
+      color: #444 !important;
+      border-bottom: 1px solid #bbb !important;
+      padding-bottom: 4mm !important;
+      margin-bottom: 6mm !important;
+    }
+    #print-area .print-meta div { margin-bottom: 1.5mm !important; }
+    #print-area .print-summary {
+      white-space: pre-wrap !important;
+      font-size: 12pt !important;
+      line-height: 1.55 !important;
+      color: #000 !important;
+    }
+  }
+
+  footer {
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text3);
+    text-align: center;
+  }
+</style>
 </head>
 <body>
+<div class="container">
 
-<header>
-  <div class="hi">
-    <div class="hl">
-      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    </div>
-    <div class="ht">
-      <h1>Resumo do Diario Oficial</h1>
-      <p>Gerencia de Educacao Especial - GEE / SEDUCT</p>
-    </div>
-    <button class="bs" onclick="abrirSobre()">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span>Sobre</span>
-    </button>
-  </div>
-</header>
+  <header>
+    <h1>Resumidor de PDF</h1>
+    <p>Extração e sumarização automática — processamento 100% local, sem envio de dados.</p>
+  </header>
 
-<div class="main">
-
-  <div class="card">
-    <div class="ch">
-      <div class="ci"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-      <div><div class="ct">Diario Oficial</div><div class="cs">Envie o PDF do Diario Oficial de Campos dos Goytacazes</div></div>
+  <!-- Drop zone -->
+  <div id="drop-zone">
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
     </div>
-    <div class="dz" id="dropzone">
-      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      <p>Arraste o PDF aqui ou clique para selecionar</p>
-      <small>Somente arquivos .pdf - Diario Oficial de Campos dos Goytacazes</small>
-      <input type="file" id="fileInput" accept=".pdf,application/pdf" style="display:none">
-    </div>
-    <div class="fi" id="fileInfo">
-      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      <span class="fi-n" id="fileName"></span>
-      <span class="fi-p" id="filePages"></span>
-      <button class="btn btn-g" style="padding:4px 10px;font-size:12px;width:auto" id="btnTrocar">Trocar</button>
-    </div>
+    <p>Arraste um PDF aqui ou clique para selecionar</p>
+    <label class="upload-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Selecionar arquivo
+      <input type="file" id="file-input" accept="application/pdf">
+    </label>
+    <p id="file-name"></p>
   </div>
 
-  <div class="card" id="cardConfig" style="display:none">
-    <div class="ch">
-      <div class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div>
-      <div><div class="ct">Configuracoes do resumo</div><div class="cs">Personalize o foco da analise</div></div>
-    </div>
-    <div id="metaDetectada" style="display:none;background:var(--accent-light);border:1px solid var(--accent-mid);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--accent);">
-      <strong>Detectado:</strong> <span id="metaTexto"></span>
-    </div>
-    <div class="field">
-      <label>Observacoes adicionais (opcional)</label>
-      <textarea id="obsAdicional" placeholder="Ex: Dar atencao especial a portarias sobre mediadores..."></textarea>
-    </div>
-    <button class="btn btn-p" id="btnGerar">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      Gerar resumo com IA
-    </button>
+  <div id="error-msg"></div>
+  <div id="loading-msg"><span class="spinner"></span> Extraindo texto do PDF...</div>
+
+  <!-- Controle de frases -->
+  <div class="control-row">
+    <label for="n-sentences">Frases no resumo:</label>
+    <input type="range" id="n-sentences" min="3" max="15" value="6" step="1">
+    <span id="range-out">6</span>
   </div>
 
-  <div class="card" id="cardSpinner" style="display:none">
-    <div class="sp" id="spWrap">
-      <div class="spin"></div>
-      <div class="sm" id="spMsg">Processando...</div>
+  <!-- Palavras-chave manuais -->
+  <div class="card keyword-control">
+    <div class="kw-head">
+      <strong>Palavras-chave prioritárias</strong>
+      <p>Adicione termos para orientar o resumo. Eles aumentam o peso das frases relacionadas. Clique no × para remover.</p>
     </div>
+    <div class="kw-input-row">
+      <input type="text" id="custom-keyword-input" placeholder="Ex.: licitação, contrato, prazo" autocomplete="off">
+      <button type="button" id="add-keyword-btn" class="kw-action-btn">Adicionar</button>
+      <button type="button" id="clear-keywords-btn" class="kw-action-btn secondary">Limpar</button>
+    </div>
+    <div id="custom-keywords-box"></div>
   </div>
 
-  <div class="rw" id="resultadoWrap">
-    <div class="rh">
-      <h2 id="resumoTitulo">Resumo do Diario Oficial</h2>
-      <p id="resumoMeta"></p>
+  <!-- Resultado -->
+  <div id="result-card" class="card" style="margin-top: 1rem;">
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-label">Páginas</div><div class="stat-value" id="s-pages">—</div></div>
+      <div class="stat"><div class="stat-label">Palavras</div><div class="stat-value" id="s-words">—</div></div>
+      <div class="stat"><div class="stat-label">Frases</div><div class="stat-value" id="s-sents">—</div></div>
+      <div class="stat"><div class="stat-label">Redução</div><div class="stat-value" id="s-ratio">—</div></div>
     </div>
-    <div class="rb" id="resumoBody"></div>
-    <div class="btn-row" style="margin-top:14px">
-      <button class="btn btn-s" id="btnBaixar">
-        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Baixar PDF
-      </button>
-      <button class="btn" id="btnImprimir">
-        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Imprimir
-      </button>
-      <button class="btn btn-g" id="btnNova">
-        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.81"/></svg>
-        Nova consulta
+
+    <div class="summary-actions">
+      <button type="button" id="print-summary-btn" class="print-summary-btn" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        Imprimir resumo
       </button>
     </div>
+
+    <div class="tab-bar">
+      <button class="tab active" data-tab="resumo">Resumo</button>
+      <button class="tab" data-tab="secoes">Seções</button>
+      <button class="tab" data-tab="keywords">Palavras-chave</button>
+    </div>
+
+    <div id="tab-resumo" class="tab-content active">
+      <p id="summary-text"></p>
+    </div>
+    <div id="tab-secoes" class="tab-content">
+      <div id="sections-box"></div>
+    </div>
+    <div id="tab-keywords" class="tab-content">
+      <p class="kw-tab-note">Palavras detectadas automaticamente no PDF. Clique em uma delas para adicioná-la às prioridades.</p>
+      <div id="keywords-box"></div>
+    </div>
   </div>
+
+  <section id="print-area" class="print-area" aria-hidden="true">
+    <h1>Resumo do PDF</h1>
+    <div class="print-meta">
+      <div><strong>Arquivo:</strong> <span id="print-file-name">—</span></div>
+      <div><strong>Gerado em:</strong> <span id="print-date">—</span></div>
+      <div><strong>Estatísticas:</strong> <span id="print-stats">—</span></div>
+      <div id="print-keywords-line"></div>
+    </div>
+    <div id="print-summary" class="print-summary"></div>
+  </section>
+
+  <footer>Processamento local via PDF.js — nenhum dado é enviado a servidores externos.</footer>
 
 </div>
-
-<div class="mo" id="modalSobre">
-  <div class="md">
-    <div class="mh">
-      <div class="mht">
-        <div><div class="man">Resumo do Diario Oficial</div><div class="mv">v1.0</div></div>
-        <button class="mc" id="btnFecharSobre">x</button>
-      </div>
-      <div class="mo-org">GEE - SEDUCT - Campos dos Goytacazes / RJ</div>
-    </div>
-    <div class="mb">
-      <p class="md-desc">Ferramenta que utiliza Inteligencia Artificial para extrair e resumir automaticamente as publicacoes relevantes do Diario Oficial de Campos dos Goytacazes, com foco em Educacao Especial e na GEE.</p>
-      <div class="cr">
-        <div class="crr">
-          <div class="ca" style="background:#1B4F9B;padding:0;">
-            <img src="data:image/jpeg;base64,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" style="width:100%;height:100%;object-fit:cover;display:block;">
-          </div>
-          <div>
-            <div class="cl">Idealizador</div>
-            <div class="cn">Alamir Rodrigues Rangel Junior</div>
-            <div class="co">Auxiliar de Secretaria - GEE / SEDUCT</div>
-          </div>
-        </div>
-        <div class="crr">
-          <div class="ca" style="background:#0F172A;">
-            <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          </div>
-          <div>
-            <div class="cl">Implementado por</div>
-            <div class="cn">Claude AI</div>
-            <div class="co">Anthropic</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="mf">Campos dos Goytacazes, RJ - SEDUCT / GEE</div>
-  </div>
-</div>
-
-<div id="toastEl" class="toast"></div>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
 
-var apiKey = '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';
-var pdfText = '';
-var resumoData = null;
-var metaEdicao = {data: '', num: ''};
+  const rangeEl   = document.getElementById('n-sentences');
+  const rangeOut  = document.getElementById('range-out');
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const loadingMsg = document.getElementById('loading-msg');
+  const errorMsg  = document.getElementById('error-msg');
+  const resultCard = document.getElementById('result-card');
+  const fileNameEl = document.getElementById('file-name');
+  const keywordInput = document.getElementById('custom-keyword-input');
+  const addKeywordBtn = document.getElementById('add-keyword-btn');
+  const clearKeywordsBtn = document.getElementById('clear-keywords-btn');
+  const customKeywordsBox = document.getElementById('custom-keywords-box');
+  const printSummaryBtn = document.getElementById('print-summary-btn');
 
-var secoes = [
-  {key: 'EDUCACAO ESPECIAL', label: 'Educacao Especial e Inclusiva', cor: '#1B4F9B'},
-  {key: 'EDUCACAO',          label: 'Educacao',                      cor: '#2563EB'},
-  {key: 'SECRETARIA',        label: 'Secretaria de Educacao (SEDUCT)', cor: '#7C3AED'},
-  {key: 'OUTROS',            label: 'Outros destaques',              cor: '#166634'}
-];
+  const CUSTOM_KEYWORDS_STORAGE = 'resumidor_pdf_custom_keywords_v2';
+  const customKeywords = new Map();
 
-function toast(msg) {
-  var t = document.getElementById('toastEl');
-  t.textContent = msg;
-  t.className = 'toast show';
-  setTimeout(function(){ t.className = 'toast'; }, 3500);
-}
+  rangeEl.addEventListener('input', () => {
+    rangeOut.textContent = rangeEl.value;
+    rerunSummaryIfReady();
+  });
 
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+  addKeywordBtn.addEventListener('click', addCustomKeywordsFromInput);
+  keywordInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomKeywordsFromInput();
+    }
+  });
+  clearKeywordsBtn.addEventListener('click', () => {
+    customKeywords.clear();
+    saveCustomKeywords();
+    renderCustomKeywords();
+    rerunSummaryIfReady();
+  });
 
-function pad(n){ return n < 10 ? '0'+n : ''+n; }
+  printSummaryBtn.addEventListener('click', printSummaryOnly);
 
-function fmtData(iso) {
-  if (!iso) return '';
-  var p = iso.split('-');
-  return pad(p[2]) + '/' + pad(p[1]) + '/' + p[0];
-}
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
 
-function extrairMeta(texto) {
-  var matchNum = texto.match(/[Ee]di[cC][aA]o\s*[Nn][^\d]*(\d+)/);
-  var num = matchNum ? 'Edicao n. ' + matchNum[1] : '';
-  var matchData = texto.match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(20\d{2})/);
-  var dataISO = '';
-  var dataFmt = '';
-  if (matchData) {
-    var d = matchData[1].length === 1 ? '0'+matchData[1] : matchData[1];
-    var m = matchData[2].length === 1 ? '0'+matchData[2] : matchData[2];
-    var a = matchData[3];
-    dataISO = a + '-' + m + '-' + d;
-    dataFmt = d + '/' + m + '/' + a;
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if (f && (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'))) processFile(f);
+    else showError('Por favor, selecione um arquivo PDF válido.');
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) processFile(fileInput.files[0]); });
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   }
-  metaEdicao.data = dataISO;
-  metaEdicao.num = num;
-  var partes = [];
-  if (num) partes.push(num);
-  if (dataFmt) partes.push(dataFmt);
-  if (partes.length > 0) {
-    document.getElementById('metaTexto').textContent = partes.join(' - ');
-    document.getElementById('metaDetectada').style.display = 'block';
-  }
-}
 
-function processarPDF(file) {
-  if (typeof pdfjsLib === 'undefined') {
-    toast('Biblioteca PDF nao carregou. Verifique sua conexao.');
-    return;
+  function getCurrentSummaryText() {
+    return (document.getElementById('summary-text').textContent || '').trim();
   }
-  toast('Lendo PDF...');
-  var reader = new FileReader();
-  reader.onerror = function() { toast('Erro ao ler o arquivo.'); };
-  reader.onload = function(e) {
-    var data = new Uint8Array(e.target.result);
-    pdfjsLib.getDocument({data: data}).promise.then(function(pdf) {
-      var numPages = pdf.numPages;
-      var promises = [];
-      for (var i = 1; i <= numPages; i++) {
-        promises.push(pdf.getPage(i).then(function(page){
-          return page.getTextContent().then(function(tc){
-            return tc.items.map(function(item){ return item.str; }).join(' ');
-          });
-        }));
+
+  function preparePrintArea() {
+    const summary = getCurrentSummaryText();
+    if (!summary || summary.startsWith('Não consegui montar')) {
+      showError('Ainda não há um resumo válido para imprimir. Selecione um PDF primeiro.');
+      return false;
+    }
+
+    const fileName = (fileNameEl.textContent || 'PDF analisado').trim();
+    const pages = document.getElementById('s-pages').textContent;
+    const words = document.getElementById('s-words').textContent;
+    const sentences = document.getElementById('s-sents').textContent;
+    const ratio = document.getElementById('s-ratio').textContent;
+    const manualKeywords = Array.from(customKeywords.values());
+
+    document.getElementById('print-file-name').textContent = fileName;
+    document.getElementById('print-date').textContent = new Date().toLocaleString('pt-BR');
+    document.getElementById('print-stats').textContent = `Páginas: ${pages} · Palavras: ${words} · Frases analisadas: ${sentences} · Redução: ${ratio}`;
+
+    const keywordLine = document.getElementById('print-keywords-line');
+    if (manualKeywords.length) {
+      keywordLine.innerHTML = `<strong>Palavras-chave prioritárias:</strong> ${escapeHtml(manualKeywords.join(', '))}`;
+    } else {
+      keywordLine.textContent = '';
+    }
+
+    document.getElementById('print-summary').textContent = summary;
+    return true;
+  }
+
+  function printSummaryOnly() {
+    if (!preparePrintArea()) return;
+    setTimeout(() => window.print(), 50);
+  }
+
+  function showError(msg) {
+    loadingMsg.style.display = 'none';
+    errorMsg.style.display = 'block';
+    errorMsg.textContent = msg;
+  }
+
+  async function processFile(file) {
+    errorMsg.style.display = 'none';
+    resultCard.style.display = 'none';
+    printSummaryBtn.disabled = true;
+    loadingMsg.style.display = 'block';
+    loadingMsg.innerHTML = '<span class="spinner"></span> Extraindo texto do PDF com preservação de linhas...';
+    fileNameEl.textContent = file.name;
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pages = pdf.numPages;
+      const texts = [];
+
+      for (let i = 1; i <= pages; i++) {
+        loadingMsg.innerHTML = `<span class="spinner"></span> Lendo página ${i} de ${pages}...`;
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false });
+        texts.push(extractPageText(content.items));
       }
-      Promise.all(promises).then(function(pages) {
-        pdfText = pages.join(' --- PAGINA --- ');
-        document.getElementById('fileName').textContent = file.name;
-        document.getElementById('filePages').textContent = numPages + (numPages === 1 ? ' pagina' : ' paginas');
-        document.getElementById('fileInfo').className = 'fi show';
-        document.getElementById('dropzone').style.display = 'none';
-        document.getElementById('cardConfig').style.display = 'block';
-        extrairMeta(pages[0] ? pages[0].substring(0, 2000) : '');
-        toast('PDF carregado! Clique em Gerar resumo com IA.');
-      }).catch(function(err) { toast('Erro nas paginas: ' + err.message); });
-    }).catch(function(err) { toast('Erro ao abrir PDF: ' + err.message); });
-  };
-  reader.readAsArrayBuffer(file);
-}
 
-function resetFile() {
-  pdfText = '';
-  document.getElementById('fileInput').value = '';
-  document.getElementById('fileInfo').className = 'fi';
-  document.getElementById('dropzone').style.display = '';
-  document.getElementById('cardConfig').style.display = 'none';
-  document.getElementById('resultadoWrap').className = 'rw';
-  document.getElementById('cardSpinner').style.display = 'none';
-}
+      const fullText = normalizeExtractedText(texts.join('\n\n'));
+      window._lastText = fullText;
+      window._lastPages = pages;
+      loadingMsg.style.display = 'none';
+      runSummary(fullText, pages);
+    } catch(e) {
+      showError('Erro ao processar o PDF: ' + e.message);
+    }
+  }
 
-function setSpinner(show, msg) {
-  document.getElementById('cardSpinner').style.display = show ? 'block' : 'none';
-  document.getElementById('spWrap').className = show ? 'sp show' : 'sp';
-  if (msg) document.getElementById('spMsg').textContent = msg;
-}
+  /* ---------- palavras-chave manuais ---------- */
 
-function gerarResumo() {
-  if (!pdfText) { toast('Carregue um PDF primeiro.'); return; }
-  if (!apiKey) { toast('API Key nao configurada.'); return; }
-  var obs = document.getElementById('obsAdicional').value;
-  document.getElementById('cardConfig').style.display = 'none';
-  document.getElementById('resultadoWrap').className = 'rw';
-  setSpinner(true, 'Enviando para analise com IA...');
-  var textoEnvio = pdfText.length > 60000 ? pdfText.substring(0, 60000) + ' [truncado]' : pdfText;
-  var prompt = 'Voce e um assistente especializado em analise de Diario Oficial do municipio de Campos dos Goytacazes, RJ. ' +
-    'Analise o texto do Diario Oficial abaixo e gere um resumo estruturado com foco nas seguintes areas: ' +
-    '1. EDUCACAO ESPECIAL E INCLUSIVA - Portarias, resolucoes, nomeacoes ou exoneracoes de mediadores, cuidadores, professores de sala de recursos, qualquer ato relacionado a alunos com necessidades especiais (NEE/PCD). ' +
-    '2. EDUCACAO - Atos administrativos gerais sobre a rede municipal de ensino, servidores, escolas. ' +
-    '3. SECRETARIA DE EDUCACAO (SEDUCT) - Qualquer ato envolvendo a secretaria. ' +
-    '4. OUTROS DESTAQUES - Demais atos relevantes para a administracao publica municipal. ' +
-    'Para cada item encontrado, informe: tipo do ato, numero e resumo do conteudo. ' +
-    'Se nao houver publicacoes em alguma categoria, informe "Nenhuma publicacao encontrada nesta edicao". ' +
-    'Seja objetivo e claro. Use linguagem formal. ' +
-    (obs ? 'Observacao: ' + obs + '. ' : '') +
-    'TEXTO DO DIARIO OFICIAL: ' + textoEnvio;
+  function normalizeKeywordKey(raw) {
+    return String(raw || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
 
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-      messages: [{role: 'user', content: prompt}]
-    })
-  })
-  .then(function(res){ return res.json(); })
-  .then(function(data){
-    setSpinner(false);
-    if (!data.content || !data.content[0]) {
-      toast('Erro na resposta da IA.');
-      document.getElementById('cardConfig').style.display = 'block';
+  function loadCustomKeywords() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CUSTOM_KEYWORDS_STORAGE) || '[]');
+      saved.forEach(item => {
+        const raw = typeof item === 'string' ? item : item.raw;
+        const key = normalizeKeywordKey(raw);
+        if (key) customKeywords.set(key, String(raw).trim());
+      });
+    } catch (_) {
+      customKeywords.clear();
+    }
+    renderCustomKeywords();
+  }
+
+  function saveCustomKeywords() {
+    const data = Array.from(customKeywords.entries()).map(([key, raw]) => ({ key, raw }));
+    localStorage.setItem(CUSTOM_KEYWORDS_STORAGE, JSON.stringify(data));
+  }
+
+  function addCustomKeyword(raw, rerun = true) {
+    const label = String(raw || '').trim();
+    const key = normalizeKeywordKey(label);
+    if (!key || key.length < 3) return false;
+    customKeywords.set(key, label);
+    saveCustomKeywords();
+    renderCustomKeywords();
+    if (rerun) rerunSummaryIfReady();
+    return true;
+  }
+
+  function addCustomKeywordsFromInput() {
+    const parts = keywordInput.value
+      .split(/[\n,;]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    let added = false;
+    parts.forEach(part => { added = addCustomKeyword(part, false) || added; });
+    if (added) {
+      keywordInput.value = '';
+      saveCustomKeywords();
+      renderCustomKeywords();
+      rerunSummaryIfReady();
+    }
+  }
+
+  function removeCustomKeyword(key) {
+    customKeywords.delete(key);
+    saveCustomKeywords();
+    renderCustomKeywords();
+    rerunSummaryIfReady();
+  }
+
+  function renderCustomKeywords() {
+    customKeywordsBox.innerHTML = '';
+
+    if (!customKeywords.size) {
+      const empty = document.createElement('span');
+      empty.className = 'kw-empty';
+      empty.textContent = 'Nenhuma palavra-chave adicionada.';
+      customKeywordsBox.appendChild(empty);
       return;
     }
-    var texto = data.content[0].text;
-    resumoData = {texto: texto, data: metaEdicao.data, num: metaEdicao.num};
-    renderResumo(texto);
-  })
-  .catch(function(err){
-    setSpinner(false);
-    toast('Erro de conexao: ' + err.message);
-    document.getElementById('cardConfig').style.display = 'block';
-  });
-}
 
-function renderResumo(texto) {
-  var titulo = 'Resumo do Diario Oficial';
-  if (resumoData.num) titulo += ' - ' + resumoData.num;
-  document.getElementById('resumoTitulo').textContent = titulo;
-  var meta = 'Campos dos Goytacazes';
-  if (resumoData.data) meta += ' - ' + fmtData(resumoData.data);
-  meta += ' - GEE / SEDUCT';
-  document.getElementById('resumoMeta').textContent = meta;
-  var body = document.getElementById('resumoBody');
-  body.innerHTML = '';
-  var linhas = texto.split('\n');
-  var secaoAtual = null;
-  var conteudoAtual = [];
-  var secoesParsed = {};
-  for (var i = 0; i < linhas.length; i++) {
-    var linha = linhas[i].trim();
-    if (!linha) continue;
-    var found = false;
-    for (var j = 0; j < secoes.length; j++) {
-      if (linha.toUpperCase().indexOf(secoes[j].key) !== -1 && linha.length < 80) {
-        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
-        secaoAtual = secoes[j].key;
-        conteudoAtual = [];
-        found = true;
-        break;
+    customKeywords.forEach((raw, key) => {
+      const span = document.createElement('span');
+      span.className = 'kw user-kw';
+
+      const label = document.createElement('span');
+      label.textContent = raw;
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'kw-remove';
+      remove.setAttribute('aria-label', 'Remover palavra-chave ' + raw);
+      remove.title = 'Remover';
+      remove.textContent = '×';
+      remove.addEventListener('click', () => removeCustomKeyword(key));
+
+      span.appendChild(label);
+      span.appendChild(remove);
+      customKeywordsBox.appendChild(span);
+    });
+  }
+
+  function getCustomKeywordRules() {
+    return Array.from(customKeywords.entries()).map(([key, raw]) => ({
+      key,
+      raw,
+      tokens: key.split(/\s+/).filter(Boolean),
+      phrase: key
+    })).filter(item => item.tokens.length);
+  }
+
+  function countKeywordHits(sentence, tokens, keywordRules) {
+    if (!keywordRules.length) return 0;
+    const tokenSet = new Set(tokens);
+    const sentenceKey = normalizeKeywordKey(sentence);
+    let hits = 0;
+
+    keywordRules.forEach(rule => {
+      if (rule.tokens.length === 1) {
+        if (tokenSet.has(rule.tokens[0])) hits++;
+        return;
+      }
+
+      const phraseHit = sentenceKey.includes(rule.phrase);
+      const coverage = rule.tokens.filter(t => tokenSet.has(t)).length / rule.tokens.length;
+      if (phraseHit || coverage >= 0.75) hits++;
+    });
+
+    return hits;
+  }
+
+  function rerunSummaryIfReady() {
+    if (window._lastText) runSummary(window._lastText, window._lastPages);
+  }
+
+  /* ---------- extração com preservação de linhas ---------- */
+
+  function extractPageText(items) {
+    const cleanItems = items
+      .filter(it => it.str && it.str.trim())
+      .map(it => ({
+        text: it.str.trim(),
+        x: Math.round(it.transform[4]),
+        y: Math.round(it.transform[5])
+      }));
+
+    if (!cleanItems.length) return '';
+
+    cleanItems.sort((a, b) => (b.y - a.y) || (a.x - b.x));
+
+    const rows = [];
+    for (const item of cleanItems) {
+      let row = rows.find(r => Math.abs(r.y - item.y) <= 3);
+      if (!row) {
+        row = { y: item.y, items: [] };
+        rows.push(row);
+      }
+      row.items.push(item);
+    }
+
+    return rows.map(row => {
+      row.items.sort((a, b) => a.x - b.x);
+      return row.items.map(it => it.text).join(' ');
+    }).join('\n');
+  }
+
+  function normalizeExtractedText(text) {
+    return text
+      .replace(/\u00ad/g, '')                         // hífen invisível
+      .replace(/([a-záàâãéèêíóôõúç])-\s*\n\s*([a-záàâãéèêíóôõúç])/gi, '$1$2')
+      .replace(/\r/g, '\n')
+      .split('\n')
+      .map(line => line.replace(/\s+/g, ' ').trim())
+      .filter(line => line && !isLineNoise(line))
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  function isLineNoise(line) {
+    const s = line.trim();
+    return (
+      /^p[aá]gina\s+\d+(\s+de\s+\d+)?$/i.test(s) ||
+      /^\d+$/i.test(s) ||
+      /^ediç[aã]o\s+n[ºo]/i.test(s) ||
+      /di[áa]rio oficial/i.test(s) ||
+      /assinado digitalmente/i.test(s) ||
+      /certificado padr[aã]o/i.test(s) ||
+      /icp.?brasil/i.test(s) ||
+      /^https?:\/\//i.test(s) ||
+      /^www\./i.test(s) ||
+      /^c[oó]digo verificador/i.test(s)
+    );
+  }
+
+  /* ---------- algoritmo de sumarização melhorado ---------- */
+
+  const STOPWORDS = new Set([
+    'a','o','as','os','um','uma','uns','umas','de','da','do','das','dos','e','em','no','na','nos','nas',
+    'que','com','para','por','sem','sob','sobre','entre','até','após','antes','durante','contra','desde',
+    'não','sim','mais','menos','muito','muita','muitos','muitas','pouco','pouca','poucos','poucas',
+    'como','quando','onde','quem','qual','quais','porque','pois','ser','estar','ter','haver','foi','são',
+    'era','eram','está','estão','tem','têm','teve','tinham','seu','sua','seus','suas','ele','ela','eles','elas',
+    'isso','isto','aquele','aquela','aqueles','aquelas','este','esta','estes','estas','esse','essa','esses','essas',
+    'pelo','pela','pelos','pelas','aos','às','num','numa','nuns','numas','todo','toda','todos','todas','cada',
+    'também','ainda','mesmo','mesma','mesmos','mesmas','cujo','cuja','cujos','cujas','lhe','lhes','me','te','se',
+    'art','artigo','inciso','parágrafo','caput','nº','n°','numero','número','forma','termos','seguinte','seguintes'
+  ]);
+
+  const JUNK_PATTERNS = [
+    /^campos dos goytacazes.{0,40}\d{2}\/\d{2}\/\d{4}/i,
+    /^\d{1,2}\s+de\s+[a-zç]+\s+de\s+\d{4}$/i,
+    /^\d{2}\/\d{2}\/\d{4}/,
+    /^mat\.?\s*n[°ºo]/i,
+    /^matr[ií]cula\s*n[°ºo]/i,
+    /^publique-?se\.?$/i,
+    /^republicado por incorre[cç][aã]o/i,
+    /^secret[aá]rio(a)? municipal/i,
+    /^wainer teixeira/i,
+    /di[áa]rio oficial/i,
+    /icp.?brasil/i,
+    /certificado padr[aã]o/i,
+    /assinado digitalmente/i,
+    /validar este documento/i
+  ];
+
+  const IMPORTANT_CUES = /\b(objetivo|finalidade|estabelece|dispõe|determina|resolve|autoriza|aprova|homologa|adjudica|designa|nomeia|exonera|convoca|contrata|celebra|concede|revoga|altera|publica|resultado|inscri[cç][aã]o|recurso|prazo|vig[eê]ncia|objeto|valor|licita[cç][aã]o|preg[aã]o|contrato|portaria|edital|decreto|lei|processo|fica)\b/i;
+
+  function normalizeToken(word) {
+    return word
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+  }
+
+  function tokenize(text) {
+    return text
+      .split(/[^A-Za-zÀ-ÖØ-öø-ÿ0-9]+/)
+      .map(normalizeToken)
+      .filter(w => w.length > 2 && !STOPWORDS.has(w));
+  }
+
+  function isHeadingLine(line) {
+    const s = line.trim();
+    if (s.length < 4 || s.length > 140) return false;
+    if (/^(PORTARIA|EDITAL|DECRETO|LEI|RESOLUÇÃO|CONTRATO|EXTRATO|AVISO|TERMO|PREGÃO|INEXIGIBILIDADE|DISPENSA|HOMOLOGAÇÃO|ADJUDICAÇÃO|CONVOCAÇÃO|CÂMARA|GUARDA|PROCON|FUNDAÇÃO)\b/i.test(s)) return true;
+    const letters = s.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g, '');
+    if (letters.length < 8) return false;
+    const upper = letters.replace(/[^A-ZÁÀÂÃÉÈÊÍÓÔÕÚÇ]/g, '').length;
+    return upper / letters.length > 0.75 && s.split(/\s+/).length <= 14;
+  }
+
+  function makeParagraphs(text) {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const paragraphs = [];
+    let current = [];
+    let heading = 'Texto principal';
+
+    function flush() {
+      const txt = current.join(' ').replace(/\s+/g, ' ').trim();
+      if (txt) paragraphs.push({ text: txt, heading, index: paragraphs.length });
+      current = [];
+    }
+
+    for (const line of lines) {
+      if (isLineNoise(line)) continue;
+      if (isHeadingLine(line)) {
+        flush();
+        heading = line;
+        continue;
+      }
+      current.push(line);
+      if (/[.!?]$/.test(line) && current.join(' ').length > 160) flush();
+    }
+    flush();
+
+    // Junta parágrafos muito pequenos ao próximo para não virar frase solta.
+    const merged = [];
+    for (const p of paragraphs) {
+      if (merged.length && p.text.length < 80 && p.heading === merged[merged.length - 1].heading) {
+        merged[merged.length - 1].text += ' ' + p.text;
+      } else {
+        merged.push({ ...p, index: merged.length });
       }
     }
-    if (!found && secaoAtual) conteudoAtual.push(linha);
+    return merged;
   }
-  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
-  var temSecao = Object.keys(secoesParsed).length > 0;
-  if (temSecao) {
-    for (var k = 0; k < secoes.length; k++) {
-      var s = secoes[k];
-      var conteudo = secoesParsed[s.key] || 'Nenhuma publicacao encontrada nesta edicao.';
-      var div = document.createElement('div');
-      div.className = 'rs';
-      div.innerHTML = '<div class="rst" style="color:' + s.cor + '">' + s.label + '</div><div class="rsb">' + esc(conteudo) + '</div>';
-      body.appendChild(div);
-    }
-  } else {
-    var div2 = document.createElement('div');
-    div2.className = 'rs';
-    div2.innerHTML = '<div class="rsb">' + esc(texto) + '</div>';
-    body.appendChild(div2);
-  }
-  document.getElementById('resultadoWrap').className = 'rw show';
-  document.getElementById('resultadoWrap').scrollIntoView({behavior:'smooth'});
-}
 
-function baixarPDF() {
-  if (!resumoData) return;
-  var jspdf = window.jspdf;
-  var doc = new jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
-  var pgW = doc.internal.pageSize.getWidth();
-  var pgH = doc.internal.pageSize.getHeight();
-  var margL = 16, margR = 16, y = 16;
-  var usW = pgW - margL - margR;
-  function checkY(n) { if (y + n > pgH - 16) { doc.addPage(); y = 16; } }
-  doc.setFontSize(7); doc.setTextColor(120,120,120);
-  doc.text('Prefeitura Municipal de Campos dos Goytacazes | SEDUCT | GEE', pgW/2, y, {align:'center'});
-  y += 5;
-  doc.setFontSize(14); doc.setFont(undefined,'bold'); doc.setTextColor(27,79,155);
-  var titulo = 'Resumo do Diario Oficial';
-  if (resumoData.num) titulo += ' - ' + resumoData.num;
-  doc.text(titulo, pgW/2, y, {align:'center'}); y += 5;
-  if (resumoData.data) {
-    doc.setFontSize(9); doc.setFont(undefined,'normal'); doc.setTextColor(100,100,100);
-    doc.text('Campos dos Goytacazes | ' + fmtData(resumoData.data) + ' | GEE / SEDUCT', pgW/2, y, {align:'center'});
-    y += 5;
+  function protectAbbreviations(text) {
+    return text
+      .replace(/\b(art|arts|inc|sr|sra|dr|dra|prof|profa|exmo|exma|n)\./gi, m => m.replace('.', '<DOT>'))
+      .replace(/n\.\s*[ºo]/gi, m => m.replace('.', '<DOT>'));
   }
-  doc.setDrawColor(27,79,155); doc.setLineWidth(0.5);
-  doc.line(margL, y, pgW-margR, y); y += 6;
-  var linhas = resumoData.texto.split('\n');
-  var secaoAtual = null;
-  var conteudoAtual = [];
-  var secoesParsed = {};
-  for (var i = 0; i < linhas.length; i++) {
-    var linha = linhas[i].trim();
-    if (!linha) continue;
-    var found = false;
-    for (var j = 0; j < secoes.length; j++) {
-      if (linha.toUpperCase().indexOf(secoes[j].key) !== -1 && linha.length < 80) {
-        if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
-        secaoAtual = secoes[j].key;
-        conteudoAtual = [];
-        found = true; break;
+
+  function restoreAbbreviations(text) {
+    return text.replace(/<DOT>/g, '.');
+  }
+
+  function splitSentencesFromParagraph(paragraph) {
+    const protectedText = protectAbbreviations(paragraph);
+    let parts = protectedText
+      .split(/(?<=[.!?])\s+(?=[A-ZÁÀÂÃÉÈÊÍÓÔÕÚÇ0-9])/g)
+      .map(restoreAbbreviations)
+      .map(cleanSentence)
+      .filter(Boolean);
+
+    // Sentenças jurídicas longas demais costumam esconder várias ideias; quebramos em ';' quando ajuda.
+    const expanded = [];
+    for (const part of parts) {
+      if (part.length > 430 && part.includes(';')) {
+        part.split(/;\s+/).map(cleanSentence).filter(Boolean).forEach(p => expanded.push(p));
+      } else {
+        expanded.push(part);
       }
     }
-    if (!found && secaoAtual) conteudoAtual.push(linha);
+    return expanded;
   }
-  if (secaoAtual) secoesParsed[secaoAtual] = conteudoAtual.join('\n').trim();
-  var temSecao = Object.keys(secoesParsed).length > 0;
-  if (temSecao) {
-    for (var k = 0; k < secoes.length; k++) {
-      var s = secoes[k];
-      var conteudo = secoesParsed[s.key] || 'Nenhuma publicacao encontrada nesta edicao.';
-      checkY(14);
-      doc.setFontSize(10); doc.setFont(undefined,'bold'); doc.setTextColor(27,79,155);
-      doc.text(s.label, margL, y); y += 2;
-      doc.setDrawColor(27,79,155); doc.setLineWidth(0.3);
-      doc.line(margL, y, pgW-margR, y); y += 4;
-      doc.setFontSize(9); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
-      var wrapped = doc.splitTextToSize(conteudo, usW);
-      for (var wi = 0; wi < wrapped.length; wi++) {
-        checkY(5); doc.text(wrapped[wi], margL, y); y += 4.5;
+
+  function cleanSentence(sentence) {
+    return sentence
+      .replace(/^[-•–—\d.)\s]+/, '')
+      .replace(/\s+/g, ' ')
+      .replace(/\s+([,.;:!?])/g, '$1')
+      .trim();
+  }
+
+  function isJunkSentence(sentence) {
+    const s = sentence.trim();
+    if (s.length < 45 || s.length > 650) return true;
+    if (JUNK_PATTERNS.some(re => re.test(s))) return true;
+    if (/^[A-ZÁÀÂÃÉÈÊÍÓÔÕÚÇ0-9\s.,º°/-]+$/.test(s) && s.length < 130) return true;
+
+    const tokens = tokenize(s);
+    const unique = new Set(tokens);
+    if (tokens.length < 6 || unique.size < 5) return true;
+
+    // Filtra linhas com cara de rodapé, expediente ou assinatura sem conteúdo decisório.
+    const low = s.toLowerCase();
+    const boilerplateHits = ['publicação', 'assinatura', 'certificado', 'expediente', 'diário oficial'].filter(x => low.includes(x)).length;
+    if (boilerplateHits >= 2) return true;
+
+    return false;
+  }
+
+  function buildSentenceObjects(paragraphs) {
+    const sentences = [];
+    paragraphs.forEach((p, pIndex) => {
+      splitSentencesFromParagraph(p.text).forEach((s, sIndex) => {
+        if (!isJunkSentence(s)) {
+          const tokens = tokenize(s);
+          sentences.push({
+            s,
+            heading: p.heading,
+            paragraphIndex: pIndex,
+            sentenceIndex: sIndex,
+            globalIndex: sentences.length,
+            tokens
+          });
+        }
+      });
+    });
+    return sentences;
+  }
+
+  function buildStats(sentences) {
+    const df = {};
+    const tf = {};
+
+    sentences.forEach(obj => {
+      const unique = new Set(obj.tokens);
+      obj.tokens.forEach(t => { tf[t] = (tf[t] || 0) + 1; });
+      unique.forEach(t => { df[t] = (df[t] || 0) + 1; });
+    });
+
+    const n = Math.max(sentences.length, 1);
+    const idf = {};
+    Object.keys(df).forEach(t => {
+      idf[t] = Math.log((1 + n) / (1 + df[t])) + 1;
+    });
+    return { df, tf, idf };
+  }
+
+  function vectorize(tokens, idf) {
+    const vec = {};
+    tokens.forEach(t => { vec[t] = (vec[t] || 0) + (idf[t] || 1); });
+    return vec;
+  }
+
+  function cosine(vecA, vecB) {
+    const keysA = Object.keys(vecA);
+    const keysB = Object.keys(vecB);
+    if (!keysA.length || !keysB.length) return 0;
+
+    const small = keysA.length <= keysB.length ? vecA : vecB;
+    const big = small === vecA ? vecB : vecA;
+    let dot = 0, normA = 0, normB = 0;
+
+    Object.values(vecA).forEach(v => { normA += v * v; });
+    Object.values(vecB).forEach(v => { normB += v * v; });
+    Object.keys(small).forEach(k => { if (big[k]) dot += small[k] * big[k]; });
+
+    return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  function scoreSentences(sentences, stats, keywordRules = []) {
+    const total = Math.max(sentences.length - 1, 1);
+
+    return sentences.map(obj => {
+      const vec = vectorize(obj.tokens, stats.idf);
+      const weighted = Object.values(vec).reduce((a, b) => a + b, 0);
+      const density = weighted / Math.sqrt(obj.tokens.length + 1);
+      const length = obj.s.split(/\s+/).length;
+      const idealLength = Math.exp(-Math.pow((length - 28) / 28, 2)); // favorece frases informativas, nem mínimas nem enormes
+      const positionBonus = 1 - (obj.globalIndex / total) * 0.12;
+      const paragraphLeadBonus = obj.sentenceIndex === 0 ? 1.10 : 1;
+      const cueBonus = IMPORTANT_CUES.test(obj.s) ? 1.18 : 1;
+      const numberBonus = /\b\d+[\d.,/%º°-]*\b/.test(obj.s) ? 1.06 : 1;
+      const headingBonus = obj.heading !== 'Texto principal' ? 1.05 : 1;
+      const keywordHits = countKeywordHits(obj.s, obj.tokens, keywordRules);
+      const keywordBonus = keywordHits ? 1 + Math.min(0.75, keywordHits * 0.24) : 1;
+
+      return {
+        ...obj,
+        vec,
+        keywordHits,
+        score: density * (0.70 + 0.30 * idealLength) * positionBonus * paragraphLeadBonus * cueBonus * numberBonus * headingBonus * keywordBonus
+      };
+    });
+  }
+
+  function selectSummary(scored, n) {
+    const pool = scored
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, Math.max(80, n * 18));
+
+    const selected = [];
+    const covered = new Set();
+    const selectedIds = new Set();
+    const perHeading = {};
+
+    while (selected.length < n && selected.length < pool.length) {
+      let best = null;
+      let bestScore = -Infinity;
+
+      for (const cand of pool) {
+        if (selectedIds.has(cand.globalIndex)) continue;
+        const maxSim = selected.reduce((m, sel) => Math.max(m, cosine(cand.vec, sel.vec)), 0);
+        if (maxSim > 0.74) continue;
+
+        const headingCount = perHeading[cand.heading] || 0;
+        const headingPenalty = headingCount >= 2 ? 0.30 : headingCount >= 1 ? 0.10 : 0;
+        const paragraphPenalty = selected.some(sel => sel.paragraphIndex === cand.paragraphIndex) ? 0.18 : 0;
+        const newTokens = cand.tokens.filter(t => !covered.has(t));
+        const novelty = newTokens.length / Math.max(cand.tokens.length, 1);
+
+        const finalScore = (0.72 * cand.score) + (0.22 * novelty) - (0.42 * maxSim) - headingPenalty - paragraphPenalty;
+        if (finalScore > bestScore) {
+          bestScore = finalScore;
+          best = cand;
+        }
       }
-      y += 4;
+
+      if (!best) break;
+      selected.push(best);
+      selectedIds.add(best.globalIndex);
+      perHeading[best.heading] = (perHeading[best.heading] || 0) + 1;
+      best.tokens.forEach(t => covered.add(t));
     }
-  } else {
-    doc.setFontSize(9); doc.setFont(undefined,'normal'); doc.setTextColor(40,40,40);
-    var wrapped2 = doc.splitTextToSize(resumoData.texto, usW);
-    for (var wi2 = 0; wi2 < wrapped2.length; wi2++) {
-      checkY(5); doc.text(wrapped2[wi2], margL, y); y += 4.5;
-    }
+
+    // Mantém a ordem original do documento. Isso melhora muito a leitura.
+    return selected.sort((a, b) => a.globalIndex - b.globalIndex);
   }
-  var nomeArq = 'resumo-diario-oficial' + (resumoData.data ? '-' + resumoData.data : '') + '.pdf';
-  doc.save(nomeArq);
-}
 
-function imprimirResumo() {
-  if (!resumoData) return;
-  var corpo = document.getElementById('resumoBody').innerHTML;
-  var w = window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Resumo DO</title><style>body{margin:0;padding:28px 32px;font-family:Arial,sans-serif;font-size:13px;}.rs{margin-bottom:20px;}.rst{font-size:11px;font-weight:700;text-transform:uppercase;color:#1B4F9B;border-bottom:2px solid #DBEAFE;padding-bottom:4px;margin-bottom:6px;}.rsb{line-height:1.8;white-space:pre-wrap;}@media print{body{padding:14px 20px;}}</style></head><body>');
-  w.document.write('<div style="text-align:center;border-bottom:2.5px solid #1B4F9B;padding-bottom:12px;margin-bottom:18px;"><div style="font-size:9px;color:#666;text-transform:uppercase;">Prefeitura Municipal de Campos dos Goytacazes | SEDUCT | GEE</div><div style="font-size:17px;font-weight:700;color:#1B4F9B;">' + document.getElementById('resumoTitulo').textContent + '</div></div>');
-  w.document.write(corpo);
-  w.document.write('<scr' + 'ipt>window.onload=function(){window.print();}</' + 'script></body></html>');
-  w.document.close();
-}
+  function getTopKeywords(stats, n) {
+    return Object.entries(stats.tf)
+      .map(([term, count]) => [term, count * (stats.idf[term] || 1)])
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n)
+      .map(([w]) => w);
+  }
 
-function novaConsulta() {
-  resetFile();
-  document.getElementById('resultadoWrap').className = 'rw';
-  window.scrollTo({top:0,behavior:'smooth'});
-}
+  function buildSections(paragraphs, scored) {
+    const byHeading = new Map();
+    paragraphs.forEach(p => {
+      if (p.heading === 'Texto principal') return;
+      if (!byHeading.has(p.heading)) byHeading.set(p.heading, []);
+      byHeading.get(p.heading).push(p.text);
+    });
 
-function abrirSobre() {
-  document.getElementById('modalSobre').className = 'mo open';
-  document.body.style.overflow = 'hidden';
-}
+    const bestByHeading = new Map();
+    scored.forEach(s => {
+      if (s.heading === 'Texto principal') return;
+      const current = bestByHeading.get(s.heading);
+      if (!current || s.score > current.score) bestByHeading.set(s.heading, s);
+    });
 
-function fecharSobre() {
-  document.getElementById('modalSobre').className = 'mo';
-  document.body.style.overflow = '';
-}
+    return Array.from(byHeading.entries()).slice(0, 10).map(([title, bodies]) => {
+      const best = bestByHeading.get(title);
+      const text = best ? best.s : bodies.join(' ').slice(0, 260).trim();
+      return { title, text };
+    });
+  }
 
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') fecharSobre(); });
+  function renderSections(sections) {
+    const secBox = document.getElementById('sections-box');
+    secBox.innerHTML = '';
 
-// Registrar todos os eventos
-document.addEventListener('DOMContentLoaded', function() {
-  var dz = document.getElementById('dropzone');
-  var fi = document.getElementById('fileInput');
+    if (!sections.length) {
+      const p = document.createElement('p');
+      p.style.cssText = 'font-size:14px; color:var(--text2);';
+      p.textContent = 'Nenhuma seção identificada. O PDF pode estar sem títulos claros ou ter texto extraído como imagem.';
+      secBox.appendChild(p);
+      return;
+    }
 
-  dz.addEventListener('click', function(){ fi.click(); });
-  fi.addEventListener('change', function(){ if (this.files[0]) processarPDF(this.files[0]); });
-  dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('over'); });
-  dz.addEventListener('dragleave', function(){ dz.classList.remove('over'); });
-  dz.addEventListener('drop', function(e){
-    e.preventDefault(); dz.classList.remove('over');
-    var f = e.dataTransfer.files[0];
-    if (f && f.type === 'application/pdf') processarPDF(f);
-    else toast('Por favor envie um arquivo PDF.');
-  });
+    sections.forEach(sec => {
+      const div = document.createElement('div');
+      div.className = 'sec-item';
 
-  document.getElementById('btnTrocar').addEventListener('click', resetFile);
-  document.getElementById('btnGerar').addEventListener('click', gerarResumo);
-  document.getElementById('btnBaixar').addEventListener('click', baixarPDF);
-  document.getElementById('btnImprimir').addEventListener('click', imprimirResumo);
-  document.getElementById('btnNova').addEventListener('click', novaConsulta);
-  document.getElementById('btnFecharSobre').addEventListener('click', fecharSobre);
-  document.getElementById('modalSobre').addEventListener('click', function(e){
-    if (e.target === this) fecharSobre();
-  });
-});
+      const title = document.createElement('div');
+      title.className = 'sec-title';
+      title.textContent = sec.title;
+
+      const text = document.createElement('div');
+      text.className = 'sec-text';
+      text.textContent = sec.text.length > 280 ? sec.text.slice(0, 280) + '…' : sec.text;
+
+      div.appendChild(title);
+      div.appendChild(text);
+      secBox.appendChild(div);
+    });
+  }
+
+  function runSummary(text, pages) {
+    const n = parseInt(rangeEl.value, 10);
+    const cleanText = normalizeExtractedText(text);
+    const paragraphs = makeParagraphs(cleanText);
+    const sentences = buildSentenceObjects(paragraphs);
+    const allWords = tokenize(cleanText);
+
+    document.getElementById('s-pages').textContent = pages;
+    document.getElementById('s-words').textContent = allWords.length.toLocaleString('pt-BR');
+    document.getElementById('s-sents').textContent = sentences.length;
+
+    if (!sentences.length) {
+      document.getElementById('s-ratio').textContent = '—';
+      document.getElementById('summary-text').textContent = 'Não consegui montar um resumo confiável. O PDF pode estar escaneado como imagem, ter pouco texto selecionável ou vir com extração muito fragmentada.';
+      document.getElementById('keywords-box').innerHTML = '';
+      renderSections([]);
+      resultCard.style.display = 'block';
+      resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    const stats = buildStats(sentences);
+    const keywordRules = getCustomKeywordRules();
+    const scored = scoreSentences(sentences, stats, keywordRules);
+    const selected = selectSummary(scored, n);
+    const summaryText = selected.map(item => '• ' + item.s).join('\n\n');
+    const summaryWords = summaryText.split(/\s+/).filter(Boolean).length;
+    const ratio = Math.max(0, Math.round((1 - summaryWords / Math.max(allWords.length, 1)) * 100));
+
+    document.getElementById('s-ratio').textContent = ratio + '%';
+    document.getElementById('summary-text').textContent = summaryText;
+
+    const kwBox = document.getElementById('keywords-box');
+    kwBox.innerHTML = '';
+    getTopKeywords(stats, 25).forEach(kw => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'kw auto-kw';
+      btn.textContent = kw;
+      btn.title = 'Adicionar às palavras-chave prioritárias';
+      btn.addEventListener('click', () => addCustomKeyword(kw, true));
+      kwBox.appendChild(btn);
+    });
+
+    renderSections(buildSections(paragraphs, scored));
+
+    printSummaryBtn.disabled = false;
+    resultCard.style.display = 'block';
+    resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  loadCustomKeywords();
 </script>
 </body>
 </html>
