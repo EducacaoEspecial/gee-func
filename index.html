@@ -827,6 +827,10 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         Limpar Dados
       </button>
+      <button class="btn" onclick="abrirModal('modalCalculadora')" style="border:1.5px solid #bfdbfe; color:#1d4ed8; background:#eff6ff;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calculadora de Prazos
+      </button>
     </div>
   </div>
 
@@ -1723,6 +1727,164 @@
 <!-- TOAST -->
 <div id="toast"></div>
 
+<!-- ── MODAL CALCULADORA DE PRAZOS ── -->
+<style>
+  /* Estilos escopados para a calculadora de prazos */
+  #modalCalculadora .calc-main { display:flex; flex-direction:column; gap:14px; }
+  #modalCalculadora .calc-card { background:#fff; border:1px solid #D0D8E8; border-radius:12px; padding:18px 20px; }
+  #modalCalculadora .calc-tab-bar { display:flex; border-bottom:1px solid #D0D8E8; margin-bottom:16px; }
+  #modalCalculadora .calc-tab-btn { flex:1; padding:10px 8px; font-size:12.5px; font-weight:600; border:none; background:transparent; cursor:pointer; color:#5A6785; font-family:inherit; border-bottom:2.5px solid transparent; }
+  #modalCalculadora .calc-tab-btn.active { color:#1B4F9B; border-bottom-color:#2563EB; }
+  #modalCalculadora .calc-tab-pane { display:none; }
+  #modalCalculadora .calc-tab-pane.active { display:block; }
+  #modalCalculadora .calc-field { margin-bottom:12px; }
+  #modalCalculadora .calc-field:last-child { margin-bottom:0; }
+  #modalCalculadora .calc-field label { display:block; font-size:11px; font-weight:700; color:#5A6785; text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+  #modalCalculadora .calc-field input, #modalCalculadora .calc-field select { width:100%; padding:10px 12px; border:1.5px solid #D0D8E8; border-radius:8px; font-size:15px; color:#111827; background:#fff; font-family:inherit; outline:none; }
+  #modalCalculadora .calc-field input:focus, #modalCalculadora .calc-field select:focus { border-color:#2563EB; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  #modalCalculadora .calc-field-row { display:grid; gap:10px; }
+  #modalCalculadora .calc-field-row.two { grid-template-columns:1fr 1fr; }
+  @media(max-width:420px){ #modalCalculadora .calc-field-row.two { grid-template-columns:1fr; } }
+  #modalCalculadora .calc-opt-group { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+  #modalCalculadora .calc-opt-chip { display:inline-flex; align-items:center; gap:5px; padding:8px 16px; border:1.5px solid #D0D8E8; border-radius:20px; font-size:13px; font-weight:500; color:#5A6785; cursor:pointer; user-select:none; background:#fff; transition:all .15s; }
+  #modalCalculadora .calc-opt-chip.sel { border-color:#2563EB; color:#1B4F9B; background:#DBEAFE; }
+  #modalCalculadora .calc-btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; border:none; background:#1B4F9B; color:#fff; font-family:inherit; width:100%; box-shadow:0 2px 8px rgba(27,79,155,.25); }
+  #modalCalculadora .calc-btn-ghost { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 18px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; border:1.5px solid #D0D8E8; background:transparent; color:#5A6785; font-family:inherit; width:100%; }
+  #modalCalculadora .calc-resultado { display:none; background:linear-gradient(135deg,#1B4F9B 0%,#1e40af 100%); border-radius:12px; padding:20px 22px; color:#fff; }
+  #modalCalculadora .calc-resultado.show { display:block; }
+  #modalCalculadora .calc-res-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.65); margin-bottom:6px; }
+  #modalCalculadora .calc-res-data { font-size:28px; font-weight:800; color:#fff; margin-bottom:4px; }
+  #modalCalculadora .calc-res-dia { font-size:13px; color:rgba(255,255,255,.75); margin-bottom:14px; }
+  #modalCalculadora .calc-res-stats { display:flex; gap:8px; flex-wrap:wrap; padding-top:12px; border-top:1px solid rgba(255,255,255,.2); }
+  #modalCalculadora .calc-stat-pill { display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.2); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:#fff; }
+  #modalCalculadora .calc-res-aviso { margin-top:10px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:5px; padding:8px 12px; font-size:12px; color:rgba(255,255,255,.85); display:none; }
+  #modalCalculadora .calc-res-aviso.show { display:block; }
+  #modalCalculadora .calc-tl-wrap { display:flex; flex-direction:column; gap:0; }
+  #modalCalculadora .calc-tl-item { display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-bottom:1px solid #D0D8E8; }
+  #modalCalculadora .calc-tl-item:last-child { border-bottom:none; }
+  #modalCalculadora .calc-tl-dot { width:26px; height:26px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; margin-top:1px; }
+  #modalCalculadora .calc-tl-dot.util { background:#DCFCE7; color:#166534; border:1.5px solid #86EFAC; }
+  #modalCalculadora .calc-tl-dot.fds { background:#E8EDF5; color:#94A3B8; border:1.5px solid #D0D8E8; }
+  #modalCalculadora .calc-tl-dot.feriado { background:#EDE9FE; color:#7C3AED; border:1.5px solid #C4B5FD; }
+  #modalCalculadora .calc-tl-dot.destino { background:#1B4F9B; color:#fff; border:1.5px solid #163F7A; }
+  #modalCalculadora .calc-tl-date { font-size:13px; font-weight:600; color:#111827; }
+  #modalCalculadora .calc-tl-tag { font-size:11px; color:#5A6785; }
+  #modalCalculadora .calc-tl-tag.fer { color:#7C3AED; font-weight:600; }
+  #modalCalculadora .calc-tl-tag.lim { color:#1B4F9B; font-weight:700; }
+  #modalCalculadora .calc-tl-num { margin-left:auto; font-size:12px; font-weight:700; color:#94A3B8; align-self:center; flex-shrink:0; }
+  #modalCalculadora .calc-legenda { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  #modalCalculadora .calc-leg { display:flex; align-items:center; gap:4px; font-size:11px; color:#5A6785; }
+  #modalCalculadora .calc-leg-dot { width:10px; height:10px; border-radius:50%; }
+  #modalCalculadora .calc-feriado-list { display:flex; flex-direction:column; gap:6px; }
+  #modalCalculadora .calc-feriado-item { display:flex; align-items:center; gap:10px; padding:8px 12px; background:#F4F6FA; border:1px solid #D0D8E8; border-radius:8px; font-size:13px; }
+  #modalCalculadora .calc-fer-date { font-weight:700; color:#1B4F9B; min-width:80px; }
+  #modalCalculadora .calc-fer-nome { color:#111827; flex:1; }
+  #modalCalculadora .calc-fer-tipo { font-size:11px; color:#94A3B8; padding:2px 8px; background:#E8EDF5; border-radius:10px; }
+</style>
+
+<div class="modal-backdrop" id="modalCalculadora">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header" style="background:linear-gradient(135deg,#1B4F9B 0%,#1e40af 100%)">
+      <span class="modal-title" style="color:#fff;display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calculadora de Prazos
+      </span>
+      <button class="modal-close" onclick="fecharModal('modalCalculadora')" style="color:#fff">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px;max-height:75vh;overflow-y:auto;background:#EEF2F7">
+      <div id="calcMain" class="calc-main">
+
+        <div class="calc-card">
+          <div class="calc-tab-bar">
+            <button class="calc-tab-btn active" id="cBtnTabCalc" onclick="calcSwitchTab(0)">Calcular prazo</button>
+            <button class="calc-tab-btn" id="cBtnTabFer" onclick="calcSwitchTab(1)">Feriados do ano</button>
+          </div>
+
+          <div class="calc-tab-pane active" id="cPaneCalc">
+            <div class="calc-field-row two">
+              <div class="calc-field">
+                <label>Data inicial</label>
+                <input type="date" id="cDataInicio">
+              </div>
+              <div class="calc-field">
+                <label>Dias úteis</label>
+                <input type="number" id="cDiasUteis" min="1" max="365" placeholder="Ex: 10">
+              </div>
+            </div>
+            <div class="calc-field">
+              <label>Contagem</label>
+              <div class="calc-opt-group">
+                <div class="calc-opt-chip sel" id="cChipIncluir" onclick="calcSelChip('tipo','incluir')">A partir da data inicial</div>
+                <div class="calc-opt-chip" id="cChipExcluir" onclick="calcSelChip('tipo','excluir')">Excluir a data inicial</div>
+              </div>
+            </div>
+            <div class="calc-field">
+              <label>Feriados</label>
+              <div class="calc-opt-group">
+                <div class="calc-opt-chip sel" id="cChipNac" onclick="calcSelChip('fer','nac')">Apenas nacionais</div>
+                <div class="calc-opt-chip" id="cChipMun" onclick="calcSelChip('fer','mun')">+ Municipais de Campos</div>
+              </div>
+            </div>
+            <div class="calc-field" style="margin-top:4px">
+              <button class="calc-btn-primary" onclick="calcCalcular()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Calcular prazo
+              </button>
+            </div>
+          </div>
+
+          <div class="calc-tab-pane" id="cPaneFer">
+            <div class="calc-feriado-list" id="cFeriadoList"></div>
+          </div>
+        </div>
+
+        <div class="calc-resultado" id="cResultado">
+          <div class="calc-res-label">Data limite</div>
+          <div class="calc-res-data" id="cResData"></div>
+          <div class="calc-res-dia" id="cResDia"></div>
+          <div class="calc-res-stats">
+            <div class="calc-stat-pill" id="cSpUteis"></div>
+            <div class="calc-stat-pill" id="cSpFds"></div>
+            <div class="calc-stat-pill" id="cSpFer" style="display:none"></div>
+            <div class="calc-stat-pill" id="cSpTotal"></div>
+          </div>
+          <div class="calc-res-aviso" id="cResAviso"></div>
+        </div>
+
+        <div class="calc-card" id="cCardTl" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #D0D8E8">
+            <div style="width:32px;height:32px;background:#DBEAFE;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B4F9B" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#111827">Calendário do prazo</div>
+              <div style="font-size:11px;color:#5A6785">Todos os dias do período</div>
+            </div>
+          </div>
+          <div class="calc-tl-wrap" id="cTlWrap"></div>
+          <div class="calc-legenda">
+            <div class="calc-leg"><div class="calc-leg-dot" style="background:#86EFAC"></div>Dia útil</div>
+            <div class="calc-leg"><div class="calc-leg-dot" style="background:#CBD5E1"></div>Fim de semana</div>
+            <div class="calc-leg"><div class="calc-leg-dot" style="background:#C4B5FD"></div>Feriado</div>
+            <div class="calc-leg"><div class="calc-leg-dot" style="background:#1B4F9B"></div>Data limite</div>
+          </div>
+        </div>
+
+        <div id="cBtnNovaWrap" style="display:none">
+          <button class="calc-btn-ghost" onclick="calcNovaConta()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.81"/></svg>
+            Nova consulta
+          </button>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="fecharModal('modalCalculadora')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ÁREA DE IMPRESSÃO (invisível na tela, visível ao imprimir) -->
 <div id="print-area"></div>
 
@@ -1732,7 +1894,7 @@
 // ══════════════════════════════════════════
 
 // ── Versão do sistema — edite manualmente quando atualizar ──
-const VERSAO_SISTEMA = 'v.12-06-2026-10h05';
+const VERSAO_SISTEMA = 'v.16-06-2026-08h45';
 
 // ── LocalStorage ──
 const LS_FUNC_KEY  = 'gee_func_funcionarios'; // chave para funcionários
@@ -3368,6 +3530,234 @@ async function carregarVersao() {
   }
 }
 carregarVersao();
+
+// ══════════════════════════════════════════
+// CALCULADORA DE PRAZOS
+// ══════════════════════════════════════════
+var calcTipoVal = 'incluir';
+var calcFerVal  = 'nac';
+
+(function() {
+  var input = document.getElementById('cDataInicio');
+  if (input) input.value = new Date().toISOString().slice(0,10);
+})();
+
+function calcSelChip(grupo, val) {
+  if (grupo === 'tipo') {
+    calcTipoVal = val;
+    document.getElementById('cChipIncluir').className = 'calc-opt-chip' + (val === 'incluir' ? ' sel' : '');
+    document.getElementById('cChipExcluir').className = 'calc-opt-chip' + (val === 'excluir' ? ' sel' : '');
+  } else {
+    calcFerVal = val;
+    document.getElementById('cChipNac').className = 'calc-opt-chip' + (val === 'nac' ? ' sel' : '');
+    document.getElementById('cChipMun').className = 'calc-opt-chip' + (val === 'mun' ? ' sel' : '');
+  }
+}
+
+function calcSwitchTab(idx) {
+  document.getElementById('cBtnTabCalc').className = 'calc-tab-btn' + (idx === 0 ? ' active' : '');
+  document.getElementById('cBtnTabFer').className  = 'calc-tab-btn' + (idx === 1 ? ' active' : '');
+  document.getElementById('cPaneCalc').className = 'calc-tab-pane' + (idx === 0 ? ' active' : '');
+  document.getElementById('cPaneFer').className  = 'calc-tab-pane' + (idx === 1 ? ' active' : '');
+  if (idx === 1) calcRenderFeriados();
+}
+
+var calcFerNacFixos = [
+  {d:1,  m:1,  n:'Confraternização Universal',  t:'Nacional'},
+  {d:21, m:4,  n:'Tiradentes',                  t:'Nacional'},
+  {d:1,  m:5,  n:'Dia do Trabalho',             t:'Nacional'},
+  {d:7,  m:9,  n:'Independência do Brasil',     t:'Nacional'},
+  {d:12, m:10, n:'Nossa Sra. Aparecida',         t:'Nacional'},
+  {d:2,  m:11, n:'Finados',                      t:'Nacional'},
+  {d:15, m:11, n:'Proclamação da República',    t:'Nacional'},
+  {d:20, m:11, n:'Consciência Negra',           t:'Nacional'},
+  {d:25, m:12, n:'Natal',                        t:'Nacional'}
+];
+
+var calcFerMunFixos = [
+  {d:20, m:1,  n:'São Sebastião (padroeiro RJ)', t:'Estadual'},
+  {d:23, m:4,  n:'Dia de São Jorge',             t:'Estadual'},
+  {d:28, m:3,  n:'Aniversário de Campos',        t:'Municipal'},
+  {d:13, m:6,  n:'Santo Antônio (padroeiro)',    t:'Municipal'},
+  {d:8,  m:12, n:'Nossa Sra. da Conceição',      t:'Municipal'}
+];
+
+function calcPascoa(ano) {
+  var a=ano%19, b=Math.floor(ano/100), c=ano%100;
+  var d2=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25);
+  var g=Math.floor((b-f+1)/3), h=(19*a+b-d2-g+15)%30;
+  var i=Math.floor(c/4), k=c%4;
+  var l=(32+2*e+2*i-h-k)%7;
+  var m2=Math.floor((a+11*h+22*l)/451);
+  var mes=Math.floor((h+l-7*m2+114)/31);
+  var dia=((h+l-7*m2+114)%31)+1;
+  return new Date(ano, mes-1, dia);
+}
+
+function calcAddDias(d, n) {
+  var r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+
+function calcPad(n) { return n < 10 ? '0'+n : ''+n; }
+
+function calcChave(d) {
+  return d.getFullYear() + '-' + calcPad(d.getMonth()+1) + '-' + calcPad(d.getDate());
+}
+
+function calcGetFeriados(ano, incluirMun) {
+  var mapa = {};
+  function add(dt, nome) {
+    var k = dt.getFullYear() + '-' + calcPad(dt.getMonth()+1) + '-' + calcPad(dt.getDate());
+    mapa[k] = nome;
+  }
+  calcFerNacFixos.forEach(function(f) { add(new Date(ano, f.m-1, f.d), f.n); });
+  var p = calcPascoa(ano);
+  add(calcAddDias(p,-48), 'Segunda de Carnaval');
+  add(calcAddDias(p,-47), 'Terça de Carnaval');
+  add(calcAddDias(p,-2),  'Paixão de Cristo');
+  add(p,                  'Páscoa');
+  add(calcAddDias(p,60),  'Corpus Christi');
+  if (incluirMun) {
+    calcFerMunFixos.forEach(function(f) { add(new Date(ano, f.m-1, f.d), f.n); });
+  }
+  return mapa;
+}
+
+function calcCalcular() {
+  var dataStr = document.getElementById('cDataInicio').value;
+  var dias    = parseInt(document.getElementById('cDiasUteis').value);
+
+  if (!dataStr) { mostrarToast('Informe a data inicial.'); return; }
+  if (!dias || dias < 1) { mostrarToast('Informe o número de dias úteis.'); return; }
+
+  var incluirMun    = (calcFerVal === 'mun');
+  var excluirInicio = (calcTipoVal === 'excluir');
+
+  var inicio = new Date(dataStr + 'T12:00:00');
+  var anos   = [inicio.getFullYear(), inicio.getFullYear()+1];
+  var mapa   = Object.assign({}, calcGetFeriados(anos[0], incluirMun), calcGetFeriados(anos[1], incluirMun));
+
+  var diasInfo = [];
+  var uteisCont = 0, fdsCount = 0, ferCount = 0;
+  var atual = new Date(inicio);
+
+  if (excluirInicio) {
+    atual.setDate(atual.getDate() + 1);
+  } else {
+    var k0 = calcChave(inicio);
+    var dow0 = inicio.getDay();
+    var tipo0 = 'util';
+    if (dow0 === 0 || dow0 === 6) { tipo0 = 'fds'; fdsCount++; }
+    else if (mapa[k0]) { tipo0 = 'feriado'; ferCount++; }
+    else { uteisCont = 1; }
+    diasInfo.push({data: new Date(inicio), tipo: tipo0, num: tipo0==='util'?1:null, fer: mapa[k0]});
+    atual = new Date(inicio);
+    atual.setDate(atual.getDate() + 1);
+  }
+
+  while (uteisCont < dias) {
+    var k = calcChave(atual);
+    var dow = atual.getDay();
+    var tipo = 'util';
+    if (dow === 0 || dow === 6) { tipo = 'fds'; fdsCount++; }
+    else if (mapa[k]) { tipo = 'feriado'; ferCount++; }
+    else { uteisCont++; }
+    diasInfo.push({data: new Date(atual), tipo: tipo, num: tipo==='util'?uteisCont:null, fer: mapa[k]});
+    atual.setDate(atual.getDate() + 1);
+  }
+
+  var ultimoUtil = null;
+  for (var i = diasInfo.length-1; i >= 0; i--) {
+    if (diasInfo[i].tipo === 'util') { ultimoUtil = diasInfo[i].data; break; }
+  }
+
+  var meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  var semana = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  var df = ultimoUtil;
+  document.getElementById('cResData').textContent = calcPad(df.getDate()) + '/' + calcPad(df.getMonth()+1) + '/' + df.getFullYear();
+  document.getElementById('cResDia').textContent  = semana[df.getDay()] + ', ' + df.getDate() + ' de ' + meses[df.getMonth()] + ' de ' + df.getFullYear();
+  document.getElementById('cSpUteis').textContent  = dias + (dias===1?' dia útil':' dias úteis');
+  document.getElementById('cSpFds').textContent    = fdsCount + (fdsCount===1?' fim de semana':' fins de semana');
+  document.getElementById('cSpTotal').textContent  = diasInfo.length + (diasInfo.length===1?' dia corrido':' dias corridos');
+
+  var cSpFer = document.getElementById('cSpFer');
+  if (ferCount > 0) {
+    cSpFer.textContent = ferCount + (ferCount===1?' feriado':' feriados');
+    cSpFer.style.display = 'inline-flex';
+  } else {
+    cSpFer.style.display = 'none';
+  }
+
+  var aviso = document.getElementById('cResAviso');
+  if (ferCount > 0) {
+    aviso.textContent = 'Atenção: ' + ferCount + (ferCount===1?' feriado foi descontado.':' feriados foram descontados.');
+    aviso.className = 'calc-res-aviso show';
+  } else {
+    aviso.className = 'calc-res-aviso';
+  }
+
+  document.getElementById('cResultado').className = 'calc-resultado show';
+
+  var chaveDestino = calcChave(ultimoUtil);
+  var semAb = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  var html = '';
+  for (var j = 0; j < diasInfo.length; j++) {
+    var d = diasInfo[j];
+    var isDestino = calcChave(d.data) === chaveDestino;
+    var dotClass  = isDestino ? 'destino' : d.tipo;
+    var dotLabel  = isDestino ? '#' : (d.tipo==='util' ? (d.num||'') : (d.tipo==='feriado'?'*':'-'));
+    var dataFmt   = calcPad(d.data.getDate()) + '/' + calcPad(d.data.getMonth()+1) + ' (' + semAb[d.data.getDay()] + ')';
+    var tagCls    = isDestino ? 'calc-tl-tag lim' : (d.tipo==='feriado' ? 'calc-tl-tag fer' : 'calc-tl-tag');
+    var tagTxt    = isDestino ? 'Data limite' : (d.tipo==='fds' ? (d.data.getDay()===0?'Domingo':'Sábado') : (d.tipo==='feriado' ? (d.fer||'Feriado') : 'Dia útil'));
+    var numHtml   = d.tipo==='util' ? '<span class="calc-tl-num">' + d.num + 'º</span>' : '';
+    html += '<div class="calc-tl-item"><div class="calc-tl-dot ' + dotClass + '">' + dotLabel + '</div><div style="flex:1"><div class="calc-tl-date">' + dataFmt + '</div><div class="' + tagCls + '">' + tagTxt + '</div></div>' + numHtml + '</div>';
+  }
+  document.getElementById('cTlWrap').innerHTML = html;
+  document.getElementById('cCardTl').style.display = 'block';
+  document.getElementById('cBtnNovaWrap').style.display = 'block';
+}
+
+function calcNovaConta() {
+  document.getElementById('cResultado').className = 'calc-resultado';
+  document.getElementById('cCardTl').style.display = 'none';
+  document.getElementById('cBtnNovaWrap').style.display = 'none';
+  document.getElementById('cDiasUteis').value = '';
+  document.getElementById('cDataInicio').value = new Date().toISOString().slice(0,10);
+}
+
+function calcRenderFeriados() {
+  var ano = new Date().getFullYear();
+  var todos = [];
+  calcFerNacFixos.forEach(function(f) { todos.push({data: new Date(ano, f.m-1, f.d), n: f.n, t: f.t}); });
+  var p = calcPascoa(ano);
+  [[calcAddDias(p,-48),'Segunda de Carnaval','Nacional'],[calcAddDias(p,-47),'Terça de Carnaval','Nacional'],
+   [calcAddDias(p,-2),'Paixão de Cristo','Nacional'],[p,'Páscoa','Nacional'],[calcAddDias(p,60),'Corpus Christi','Nacional']
+  ].forEach(function(x){ todos.push({data:x[0],n:x[1],t:x[2]}); });
+  calcFerMunFixos.forEach(function(f) { todos.push({data: new Date(ano, f.m-1, f.d), n: f.n, t: f.t}); });
+  todos.sort(function(a,b){return a.data-b.data;});
+  var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  var html = '';
+  todos.forEach(function(f) {
+    html += '<div class="calc-feriado-item"><span class="calc-fer-date">' + calcPad(f.data.getDate()) + '/' + calcPad(f.data.getMonth()+1) + ' (' + dias[f.data.getDay()] + ')</span><span class="calc-fer-nome">' + f.n + '</span><span class="calc-fer-tipo">' + f.t + '</span></div>';
+  });
+  document.getElementById('cFeriadoList').innerHTML = html;
+}
+
+// Resetar calculadora ao abrir o modal
+var _origAbrirModal = typeof abrirModal === 'function' ? abrirModal : null;
+(function() {
+  var _orig = window.abrirModal;
+  window.abrirModal = function(id) {
+    if (id === 'modalCalculadora') {
+      calcNovaConta();
+      document.getElementById('cDataInicio').value = new Date().toISOString().slice(0,10);
+      calcSwitchTab(0);
+    }
+    if (_orig) _orig(id);
+  };
+})();
 
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
