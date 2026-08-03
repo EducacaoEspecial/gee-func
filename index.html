@@ -1653,6 +1653,17 @@
         </button>
       </div>
 
+      <!-- SELEÇÃO DE FUNCIONÁRIO -->
+      <div class="form-group" style="margin:0 0 1rem">
+        <label class="form-label">Funcionário(s)</label>
+        <select class="form-control" id="pontoFuncionario" onchange="pontoAtualizarResumos()">
+          <option value="">Todos os funcionários ativos e afastados</option>
+        </select>
+        <div style="font-size:0.72rem;color:var(--cinza-texto);margin-top:0.3rem">
+          Selecione um nome para gerar o ponto de apenas um funcionário.
+        </div>
+      </div>
+
       <!-- ABA: MÊS ÚNICO -->
       <div id="abaPontoUnico">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
@@ -1672,8 +1683,8 @@
             <input class="form-control" id="pontoAno" type="number" min="2020" max="2040" value="2026">
           </div>
         </div>
-        <div style="background:var(--verde-muted);border:1px solid var(--verde-borda);border-radius:var(--radius-sm);padding:0.6rem 0.875rem;font-size:0.8rem;color:var(--verde)">
-          Uma ficha por funcionário ativo para o mês selecionado.
+        <div id="pontoPreviewUnico" style="background:var(--verde-muted);border:1px solid var(--verde-borda);border-radius:var(--radius-sm);padding:0.6rem 0.875rem;font-size:0.8rem;color:var(--verde)">
+          <!-- preenchido dinamicamente -->
         </div>
       </div>
 
@@ -1894,7 +1905,7 @@
 // ══════════════════════════════════════════
 
 // ── Versão do sistema — edite manualmente quando atualizar ──
-const VERSAO_SISTEMA = 'v.16-06-2026-08h45';
+const VERSAO_SISTEMA = 'v.03-08-2026-08h48';
 
 // ── LocalStorage ──
 const LS_FUNC_KEY  = 'gee_func_funcionarios'; // chave para funcionários
@@ -3247,7 +3258,58 @@ function pontoAbaSelecionar(aba) {
   document.getElementById('tabPontoUnico').style.color           = aba === 'unico'     ? '#fff'    : 'var(--cinza-texto)';
   document.getElementById('tabPontoIntervalo').style.background  = aba === 'intervalo' ? '#0369a1' : '#f1f5f9';
   document.getElementById('tabPontoIntervalo').style.color       = aba === 'intervalo' ? '#fff'    : 'var(--cinza-texto)';
-  if (aba === 'intervalo') pontoAtualizarPreview();
+  pontoAtualizarResumos();
+}
+
+function pontoPreencherFuncionarios() {
+  const select = document.getElementById('pontoFuncionario');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Todos os funcionários ativos e afastados</option>';
+  [...funcionarios]
+    .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'))
+    .forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f.id;
+      opt.textContent = `${f.nome} — Mat. ${f.matricula || 'sem matrícula'} (${f.status || 'sem status'})`;
+      select.appendChild(opt);
+    });
+}
+
+function pontoObterListaSelecionada() {
+  const idSelecionado = document.getElementById('pontoFuncionario')?.value || '';
+  if (idSelecionado) {
+    const funcionario = funcionarios.find(f => f.id === idSelecionado);
+    return funcionario ? [funcionario] : [];
+  }
+  return getSorted([...funcionarios]).filter(f => f.status !== 'Inativo');
+}
+
+function pontoDescricaoSelecao() {
+  const lista = pontoObterListaSelecionada();
+  const idSelecionado = document.getElementById('pontoFuncionario')?.value || '';
+  if (idSelecionado && lista[0]) return `<strong>${esc(lista[0].nome)}</strong>`;
+  return `${lista.length} funcionário${lista.length !== 1 ? 's' : ''}`;
+}
+
+function pontoAtualizarPreviewUnico() {
+  const mes = parseInt(document.getElementById('pontoMes').value);
+  const ano = parseInt(document.getElementById('pontoAno').value) || new Date().getFullYear();
+  const NOMES = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const lista = pontoObterListaSelecionada();
+  const el = document.getElementById('pontoPreviewUnico');
+  if (!el) return;
+
+  if (lista.length === 0) {
+    el.style.background = '#fef2f2'; el.style.borderColor = '#fecaca'; el.style.color = '#b91c1c';
+    el.innerHTML = '⚠️ Nenhum funcionário disponível para gerar a ficha.';
+    if (_pontoAba === 'unico') document.getElementById('btnGerarPonto').disabled = true;
+    return;
+  }
+
+  if (_pontoAba === 'unico') document.getElementById('btnGerarPonto').disabled = false;
+  el.style.background = 'var(--verde-muted)'; el.style.borderColor = 'var(--verde-borda)'; el.style.color = 'var(--verde)';
+  el.innerHTML = `📋 <strong>${NOMES[mes]}</strong> de ${ano} &nbsp;·&nbsp; ${pontoDescricaoSelecao()} &nbsp;·&nbsp; <strong>${lista.length} ficha${lista.length !== 1 ? 's' : ''}</strong>`;
 }
 
 function pontoAtualizarPreview() {
@@ -3255,25 +3317,37 @@ function pontoAtualizarPreview() {
   const inicio = parseInt(document.getElementById('pontoMesInicio').value);
   const fim    = parseInt(document.getElementById('pontoMesFim').value);
   const NOMES  = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const ativos = funcionarios.filter(f => f.status !== 'Inativo').length;
+  const lista  = pontoObterListaSelecionada();
   const el     = document.getElementById('pontoPreview');
 
   if (fim < inicio) {
     el.style.background = '#fef2f2'; el.style.borderColor = '#fecaca'; el.style.color = '#b91c1c';
     el.innerHTML = '⚠️ Mês final deve ser igual ou posterior ao mês inicial.';
-    document.getElementById('btnGerarPonto').disabled = true;
+    if (_pontoAba === 'intervalo') document.getElementById('btnGerarPonto').disabled = true;
+    return;
+  }
+
+  if (lista.length === 0) {
+    el.style.background = '#fef2f2'; el.style.borderColor = '#fecaca'; el.style.color = '#b91c1c';
+    el.innerHTML = '⚠️ Nenhum funcionário disponível para gerar as fichas.';
+    if (_pontoAba === 'intervalo') document.getElementById('btnGerarPonto').disabled = true;
     return;
   }
 
   const totalMeses = fim - inicio + 1;
-  const totalFichas = totalMeses * ativos;
-  document.getElementById('btnGerarPonto').disabled = false;
+  const totalFichas = totalMeses * lista.length;
+  if (_pontoAba === 'intervalo') document.getElementById('btnGerarPonto').disabled = false;
   el.style.background = '#eff6ff'; el.style.borderColor = '#bfdbfe'; el.style.color = '#1e40af';
-  el.innerHTML = `📋 <strong>${NOMES[inicio]}</strong> a <strong>${NOMES[fim]}</strong> de ${ano} &nbsp;·&nbsp; ${totalMeses} mês${totalMeses > 1 ? 'es' : ''} &nbsp;·&nbsp; ${ativos} funcionários &nbsp;·&nbsp; <strong>${totalFichas} fichas</strong>`;
+  el.innerHTML = `📋 <strong>${NOMES[inicio]}</strong> a <strong>${NOMES[fim]}</strong> de ${ano} &nbsp;·&nbsp; ${totalMeses} mês${totalMeses > 1 ? 'es' : ''} &nbsp;·&nbsp; ${pontoDescricaoSelecao()} &nbsp;·&nbsp; <strong>${totalFichas} ficha${totalFichas !== 1 ? 's' : ''}</strong>`;
+}
+
+function pontoAtualizarResumos() {
+  pontoAtualizarPreviewUnico();
+  pontoAtualizarPreview();
 }
 
 function abrirModalPonto() {
-  if (funcionarios.length === 0) { toast('Nenhum funcionario cadastrado.', false, true); return; }
+  if (funcionarios.length === 0) { toast('Nenhum funcionário cadastrado.', false, true); return; }
   const agora = new Date();
   const mes = agora.getMonth() + 1;
   const ano = agora.getFullYear();
@@ -3282,12 +3356,16 @@ function abrirModalPonto() {
   document.getElementById('pontoAnoIntervalo').value = ano;
   document.getElementById('pontoMesInicio').value = mes;
   document.getElementById('pontoMesFim').value = 12;
+  pontoPreencherFuncionarios();
+  document.getElementById('pontoFuncionario').value = '';
   pontoAbaSelecionar('unico');
-  // Listeners para preview em tempo real
-  ['pontoMesInicio','pontoMesFim','pontoAnoIntervalo'].forEach(id => {
+
+  // Atualizar os resumos em tempo real
+  ['pontoMes','pontoAno','pontoMesInicio','pontoMesFim','pontoAnoIntervalo','pontoFuncionario'].forEach(id => {
     const el = document.getElementById(id);
-    el.onchange = pontoAtualizarPreview;
+    if (el) el.onchange = pontoAtualizarResumos;
   });
+  pontoAtualizarResumos();
   abrirModal('modalPonto');
 }
 
@@ -3310,8 +3388,8 @@ async function gerarFichasPonto() {
     mesesParaGerar = [mes];
   }
 
-  const lista = getSorted([...funcionarios]).filter(f => f.status !== 'Inativo');
-  if (lista.length === 0) { toast('Nenhum funcionario ativo encontrado.', false, true); return; }
+  const lista = pontoObterListaSelecionada();
+  if (lista.length === 0) { toast('Nenhum funcionário disponível para gerar o ponto.', false, true); return; }
 
   fecharModal('modalPonto');
   toast('Buscando feriados...', true);
